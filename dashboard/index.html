@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | Qoyla Loyalty</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="../assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- NOTE FOR BACKEND: this page requires auth_check.php at top -->
+<!-- session_start(); require_once '../includes/auth_check.php'; -->
+
+<nav class="qoyla-nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-brand">QOYLA<span>Loyalty Dashboard</span></a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../menu.html">Menu</a>
+      <a href="index.html" class="active">My Dashboard</a>
+      <!-- NOTE FOR BACKEND: replace with: <a href="../auth/logout.php">Logout</a> -->
+      <a href="../auth/login.html" class="nav-btn-login" style="background:var(--charcoal-light);">Logout</a>
+    </div>
+    <button class="nav-hamburger" id="navHamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="nav-mobile" id="navMobile">
+    <a href="../index.html">Home</a><a href="../menu.html">Menu</a>
+    <a href="index.html">Dashboard</a><a href="../auth/login.html">Logout</a>
+  </div>
+</nav>
+
+<div style="background:var(--off-white); min-height:100vh; padding:2.5rem 0;">
+  <div class="container">
+
+    <!-- Welcome Banner -->
+    <!-- NOTE FOR BACKEND: replace static text with $customer['name'] and $customer['sr_no'] -->
+    <div class="dashboard-banner" data-aos="fade-down">
+      <h2>Welcome back, Ali Hassan 👋</h2>
+      <p>Qoyla Loyalty Member &nbsp;·&nbsp; <strong style="color:var(--flame-orange);">#042</strong> &nbsp;·&nbsp; Member since Jan 2026</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 2fr; gap:1.5rem; margin-bottom:1.5rem;">
+
+      <!-- LOYALTY POINTS CARD -->
+      <div class="stat-card" style="text-align:center; padding:2.5rem 2rem;" data-aos="fade-up">
+        <i class="fas fa-fire" style="font-size:2.5rem; color:var(--flame-orange); display:block; margin-bottom:1rem;"></i>
+        <div style="font-size:0.72rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">Your Points</div>
+        <!-- NOTE FOR BACKEND: replace 2,450 with <?= number_format($customer['total_points']) ?> -->
+        <div class="points-display" style="font-size:3rem; margin-bottom:0.3rem;">2,450</div>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:2rem;">≈ Rs. 350 discount value</div>
+        <!-- Transfer button opens modal -->
+        <button class="btn-qoyla" style="width:100%; justify-content:center;" onclick="openModal('transferModal')">
+          <i class="fas fa-paper-plane"></i> Transfer Points
+        </button>
+      </div>
+
+      <!-- RECENT VISITS -->
+      <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+        <h4>Recent Visits <span style="font-size:0.72rem; color:var(--text-muted); font-weight:400; text-transform:none; letter-spacing:0;">(last 3)</span></h4>
+        <!-- NOTE FOR BACKEND: PHP foreach($recentVisits as $v) loop -->
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1rem; background:var(--off-white); border-radius:var(--radius-sm);">
+            <div>
+              <span style="font-weight:700; font-size:0.95rem;">20 Mar 2026</span>
+              <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">· Dine In</span>
+            </div>
+            <span style="color:#16A34A; font-weight:700; font-family:'Cinzel',serif;">+120 pts</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1rem; background:var(--off-white); border-radius:var(--radius-sm);">
+            <div>
+              <span style="font-weight:700; font-size:0.95rem;">15 Mar 2026</span>
+              <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">· Weekend Visit</span>
+            </div>
+            <span style="color:#16A34A; font-weight:700; font-family:'Cinzel',serif;">+200 pts</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1rem; background:var(--off-white); border-radius:var(--radius-sm);">
+            <div>
+              <span style="font-weight:700; font-size:0.95rem;">8 Mar 2026</span>
+              <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">· Game Night</span>
+            </div>
+            <span style="color:#16A34A; font-weight:700; font-family:'Cinzel',serif;">+170 pts</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- end top row -->
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+      <!-- ACTIVE DEALS -->
+      <div class="stat-card" data-aos="fade-up">
+        <h4>Active Deals</h4>
+        <!-- NOTE FOR BACKEND: PHP foreach($deals as $deal) -->
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+          <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+            <i class="fas fa-tag" style="color:var(--flame-orange); margin-top:3px; flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Weekend Double Points</div>
+              <div style="font-size:0.82rem; color:var(--text-muted);">Earn 2× every Friday–Sunday</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+            <i class="fas fa-tag" style="color:var(--flame-orange); margin-top:3px; flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">500 pts = 10% Discount</div>
+              <div style="font-size:0.82rem; color:var(--text-muted);">Redeem on your next visit</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+            <i class="fas fa-tag" style="color:var(--flame-orange); margin-top:3px; flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Game Night Bonus</div>
+              <div style="font-size:0.82rem; color:var(--text-muted);">+50 bonus pts every Thursday</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSFER SUMMARY -->
+      <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+        <h4>Transfer Summary <span style="font-size:0.72rem; color:var(--text-muted); font-weight:400; text-transform:none; letter-spacing:0;">(last 30 days)</span></h4>
+        <!-- NOTE FOR BACKEND: PHP foreach($transferHistory as $t) -->
+        <div style="display:flex; flex-direction:column; gap:0; border:1px solid var(--border-light); border-radius:var(--radius-sm); overflow:hidden;">
+
+          <div style="display:flex; justify-content:space-between; padding:0.75rem 1rem; font-size:0.87rem; border-bottom:1px solid var(--border-light); background:white;">
+            <span>20 Mar · Admin Adjustment</span>
+            <span style="color:#16A34A; font-weight:700;">+120 pts</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.75rem 1rem; font-size:0.87rem; border-bottom:1px solid var(--border-light); background:white;">
+            <span>15 Mar · Earned on Visit</span>
+            <span style="color:#16A34A; font-weight:700;">+200 pts</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.75rem 1rem; font-size:0.87rem; border-bottom:1px solid var(--border-light); background:white;">
+            <span>10 Mar · Redeemed Discount</span>
+            <span style="color:#DC2626; font-weight:700;">−300 pts</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.75rem 1rem; font-size:0.87rem; background:white;">
+            <span>8 Mar · Game Night Bonus</span>
+            <span style="color:#16A34A; font-weight:700;">+170 pts</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- end bottom row -->
+
+  </div>
+</div>
+
+<!-- ============================================================
+     TRANSFER MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="transferModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Transfer Points</div>
+      <button class="modal-close" onclick="closeModal('transferModal')">&times;</button>
+    </div>
+    <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.7;">
+      Transfer your points to admin for discount redemption, or transfer to hotel/another customer.
+    </p>
+    <!-- NOTE FOR BACKEND: action="transfer.php" method="POST" -->
+    <!-- max value should be <?= $customer['total_points'] ?> -->
+    <form>
+      <div class="form-group">
+        <label class="form-label">Points to Transfer</label>
+        <input type="number" name="points" class="form-input" placeholder="e.g. 500" min="1" max="2450" required>
+        <div class="form-hint">You have 2,450 points available</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Transfer To</label>
+        <select name="transfer_type" class="form-select" style="appearance:none;">
+          <option value="admin">Qoyla Admin — Discount Redemption</option>
+          <option value="hotel">Transfer to Hotel</option>
+          <option value="customer">Transfer to Another Customer</option>
+        </select>
+      </div>
+      <div class="form-group" id="customerIdField" style="display:none;">
+        <label class="form-label">Recipient Phone Number</label>
+        <input type="tel" name="recipient_phone" class="form-input" placeholder="Customer's phone">
+      </div>
+      <button type="submit" class="btn-qoyla" style="width:100%; justify-content:center; margin-top:0.5rem;">
+        Confirm Transfer <i class="fas fa-check"></i>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  // Show recipient field when transferring to another customer
+  document.querySelector('select[name="transfer_type"]').addEventListener('change', function() {
+    document.getElementById('customerIdField').style.display = this.value === 'customer' ? 'block' : 'none';
+  });
+</script>
+</body>
+</html>

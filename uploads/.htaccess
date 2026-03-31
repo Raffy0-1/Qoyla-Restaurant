@@ -1,0 +1,12 @@
+Options -Indexes
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|php[34578]|phtml|pl|py|jsp|asp|htm|shtml|sh|cgi)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
