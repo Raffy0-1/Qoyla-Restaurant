@@ -8,6 +8,7 @@ require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
 $pageTitle  = 'Menu | Qoyla Restaurant';
+$metaDescription = 'Explore our premium menu of authentic charcoal dishes, including Karahi, BBQ, and special Desi platters. High-quality ingredients and traditional recipes.';
 $activePage = 'menu';
 include 'includes/header.php';
 

@@ -8,8 +8,11 @@ session_start();
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
-$pageTitle  = 'Contact | Qoyla Restaurant';
+$pageTitle  = 'Contact Us | Qoyla Restaurant Multan';
+$metaDescription = 'Get in touch with Qoyla Restaurant. Find our location in Multan, book a table, or send us your feedback. Authentic Pakistani charcoal cuisine at your fingertips.';
 $activePage = 'contact';
+
+include 'includes/header.php';
 
 // ---- Handle Form Submission (POST) ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

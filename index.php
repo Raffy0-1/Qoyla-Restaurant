@@ -8,6 +8,7 @@ require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
 $pageTitle  = 'Qoyla Restaurant | Desi Flavours, Multan';
+$metaDescription = 'Experience the authentic taste of charcoal-grilled Karahi, BBQ, and Desi cuisine at Qoyla Restaurant, Multan. Join our Loyalty Club for exclusive rewards.';
 $activePage = 'home';
 include 'includes/header.php';
 

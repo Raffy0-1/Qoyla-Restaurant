@@ -1,33 +1,13 @@
 <?php
 session_start();
 require_once 'includes/db.php';
+require_once 'includes/functions.php';
+
+$pageTitle  = 'Gallery | Qoyla Restaurant';
+$metaDescription = 'Step inside Qoyla Restaurant Multan. A visual feast of charcoal-grilled Karahi, family moments, high-energy game nights, and our premium dining ambiance.';
+$activePage = 'gallery';
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery | Qoyla Restaurant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-<nav class="qoyla-nav">
-  <div class="nav-inner">
-    <a href="<?= BASE_URL ?>index.php" class="nav-brand">QOYLA<span>Restaurant · Multan</span></a>
-    <div class="nav-links">
-      <a href="<?= BASE_URL ?>index.php">Home</a><a href="<?= BASE_URL ?>menu.php">Menu</a>
-      <a href="<?= BASE_URL ?>gallery.php" class="active">Gallery</a>
-      <a href="<?= BASE_URL ?>about.php">About</a><a href="<?= BASE_URL ?>contact.php">Contact</a>
-      <a href="<?= BASE_URL ?>auth/login.php" class="nav-btn-login">Login</a>
-    </div>
-    <button class="nav-hamburger" id="navHamburger"><span></span><span></span><span></span></button>
-  </div>
-  <div class="nav-mobile" id="navMobile">
-    <a href="<?= BASE_URL ?>index.php">Home</a><a href="<?= BASE_URL ?>menu.php">Menu</a><a href="<?= BASE_URL ?>gallery.php">Gallery</a>
-    <a href="<?= BASE_URL ?>about.php">About</a><a href="<?= BASE_URL ?>contact.php">Contact</a><a href="<?= BASE_URL ?>auth/login.php">Login</a>
-  </div>
-</nav>
 
 <div style="background:var(--charcoal-black); padding:4rem 0 3rem; text-align:center;">
   <div class="container">
