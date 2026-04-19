@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'includes/db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,7 +9,7 @@ session_start();
   <title>About | Qoyla Restaurant</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body>
 <nav class="qoyla-nav">
@@ -149,6 +150,6 @@ session_start();
   </div>
   <div class="footer-bottom"><p>&copy; 2026 Qoyla Restaurant.</p><p>Made with 🔥 in Multan</p></div>
 </footer>
-<script src="assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 </body>
 </html>
