@@ -10,6 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= e($pageTitle ?? 'Qoyla Restaurant | Authentic Desi Flavours in Multan') ?></title>
   <meta name="description" content="<?= e($metaDescription ?? 'Qoyla Restaurant in Multan offers the authentic taste of charcoal-grilled desi cuisine. Join our Loyalty club for exclusive rewards and deals.') ?>">
+  <link rel="icon" type="image/png" href="<?= BASE_URL ?>assets/img/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
