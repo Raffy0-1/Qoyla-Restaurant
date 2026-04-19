@@ -1,3 +1,4 @@
+<?php
 // Variables to set BEFORE including this file:
 // $pageTitle       — string shown in browser tab
 // $metaDescription — string for search engine snippet
