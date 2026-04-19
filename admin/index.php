@@ -46,37 +46,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- ADD POINTS to customer ---
     if ($action === 'add_points') {
-        $customerId = (int)$_POST['customer_id'];
-        $points     = (int)$_POST['points'];
-        
-        if ($points < 0) {
-            setFlash('error', 'Points must be a positive number.');
-            header('Location: ' . BASE_URL . 'admin/index.php?page=customers'); exit;
-        }
-        $type       = $_POST['type'] ?? 'earned';    // earned / adjusted / redeemed
-        $desc       = trim($_POST['description'] ?? 'Admin adjustment');
+        try {
+            $customerId = (int)$_POST['customer_id'];
+            $points     = (int)$_POST['points'];
+            
+            if ($points < 0) {
+                setFlash('error', 'Points must be a positive number.');
+                header('Location: ' . BASE_URL . 'admin/index.php?page=customers'); exit;
+            }
+            $type       = $_POST['type'] ?? 'earned';    // earned / adjusted / redeemed
+            $desc       = trim($_POST['description'] ?? 'Admin adjustment');
 
-        if ($type === 'redeemed') {
-            $pdo->prepare("UPDATE customers SET total_points = GREATEST(0, total_points - ?) WHERE id=?")
-                ->execute([$points, $customerId]);
-        } else {
-            $pdo->prepare("UPDATE customers SET total_points = total_points + ? WHERE id=?")
-                ->execute([$points, $customerId]);
-        }
-        $pdo->prepare("INSERT INTO points_history (customer_id,points,type,description,date,added_by) VALUES(?,?,?,?,CURDATE(),?)")
-            ->execute([$customerId, $points, $type, $desc, $_SESSION['admin_id']]);
-        
-        // Log explicitly in points_log
-        $signedPoints = $type === 'redeemed' ? -$points : $points;
-        $pdo->prepare("INSERT INTO points_log (customer_id,change_amount,reason,expires_at) VALUES(?,?,?,?)")
-            ->execute([$customerId, $signedPoints, $desc . ' (by Admin)', $type === 'redeemed' ? null : date('Y-m-d', strtotime('+6 months'))]);
+            if ($type === 'redeemed') {
+                $pdo->prepare("UPDATE customers SET total_points = GREATEST(0, total_points - ?) WHERE id=?")
+                    ->execute([$points, $customerId]);
+            } else {
+                $pdo->prepare("UPDATE customers SET total_points = total_points + ? WHERE id=?")
+                    ->execute([$points, $customerId]);
+            }
+            
+            // Log in history
+            $pdo->prepare("INSERT INTO points_history (customer_id,points,type,description,date,added_by) VALUES(?,?,?,?,CURDATE(),?)")
+                ->execute([$customerId, $points, $type, $desc, $_SESSION['admin_id']]);
+            
+            // Log in points_log
+            $signedPoints = $type === 'redeemed' ? -$points : $points;
+            $pdo->prepare("INSERT INTO points_log (customer_id,change_amount,reason,expires_at) VALUES(?,?,?,?)")
+                ->execute([$customerId, $signedPoints, $desc . ' (by Admin)', $type === 'redeemed' ? null : date('Y-m-d', strtotime('+6 months'))]);
 
-        // Also record as a visit if type is 'earned'
-        if ($type === 'earned') {
-            $pdo->prepare("INSERT INTO visits (customer_id,visit_date,points_earned,notes,added_by) VALUES(?,CURDATE(),?,?,?)")
-                ->execute([$customerId, $points, $desc, $_SESSION['admin_id']]);
+            // Also record as a visit if type is 'earned'
+            if ($type === 'earned') {
+                $pdo->prepare("INSERT INTO visits (customer_id,visit_date,points_earned,notes,added_by) VALUES(?,CURDATE(),?,?,?)")
+                    ->execute([$customerId, $points, $desc, $_SESSION['admin_id']]);
+            }
+            
+            setFlash('success', "Points updated for customer.");
+        } catch (Exception $e) {
+            setFlash('error', 'Database Error: ' . $e->getMessage());
         }
-        setFlash('success', "Points updated for customer.");
         header('Location: ' . BASE_URL . 'admin/index.php?page=customers'); exit;
     }
 
