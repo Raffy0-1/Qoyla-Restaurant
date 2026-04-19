@@ -4,6 +4,7 @@
 // File: auth/logout.php
 // ============================================================
 session_start();
+require_once '../includes/db.php';
 
 // Destroy everything
 $_SESSION = [];
