@@ -51,6 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$maxSr, $name, $phone, $email ?: null, $hashedPass]);
 
+            if (!empty($email)) {
+                $bodyHTML = "
+                    <h2 style='color:#E8500A'>Welcome to Qoyla Loyalty Club, " . e($name) . "!</h2>
+                    <p>We are thrilled to have you. You can now earn points on every visit, access exclusive deals, and claim rewards.</p>
+                    <p><strong>Your Member ID (Phone):</strong> " . e($phone) . "</p>
+                    <p>Log in to your dashboard to track your points and available deals.</p>
+                ";
+                sendQoylaEmail($email, 'Welcome to Qoyla Loyalty Club', $bodyHTML);
+            }
+
             // Redirect to login with success message
             header('Location: /qoyla/auth/login.php?registered=1');
             exit;

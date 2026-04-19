@@ -75,4 +75,44 @@ function verifyCsrfToken($token) {
     }
     return true;
 }
+
+// ============================================================
+// EMAIL HELPER
+// ============================================================
+function sendQoylaEmail($to, $subject, $bodyHTML) {
+    $message = "
+    <html>
+    <head>
+      <title>$subject</title>
+      <link href='https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap' rel='stylesheet'>
+      <style>
+        body { font-family: Arial, sans-serif; background-color: #1A1A1A; color: #FFFFFF; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #2D2D2D; padding: 30px; border-radius: 8px; border-top: 4px solid #E8500A; }
+        .header { text-align: center; margin-bottom: 20px; font-size: 24px; font-family: 'Cinzel', serif; font-weight: bold; color: #E8500A; letter-spacing: 2px; }
+        .content { font-size: 16px; line-height: 1.6; color: #E5E5E5; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #888888; border-top: 1px solid #444; padding-top: 15px; }
+      </style>
+    </head>
+    <body>
+      <div class='container'>
+        <div class='header'>QOYLA RESTAURANT</div>
+        <div class='content'>
+          $bodyHTML
+        </div>
+        <div class='footer'>
+          &copy; " . date('Y') . " Qoyla Restaurant, Multan. Authentic desi flavors, crafted over charcoal.<br>
+          <a href='https://qoyla.pk' style='color:#E8500A; text-decoration:none;'>Visit our website</a>
+        </div>
+      </div>
+    </body>
+    </html>
+    ";
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Qoyla Restaurant <noreply@qoyla.pk>\r\n";
+    $headers .= "Reply-To: info@qoyla.pk\r\n";
+
+    return @mail($to, $subject, $message, $headers);
+}
 ?>

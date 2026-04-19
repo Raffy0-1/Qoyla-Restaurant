@@ -15,14 +15,14 @@ include 'includes/header.php';
 $deals    = $pdo->query("SELECT * FROM deals WHERE is_active = 1 ORDER BY id DESC LIMIT 6")->fetchAll();
 $featured = $pdo->query("SELECT * FROM menu_items WHERE is_featured = 1 AND is_available = 1 LIMIT 4")->fetchAll();
 
-// Deal type icons map
+// Deal type icon map — Font Awesome classes
 $dealIcons = [
-    'package'      => '🎁',
-    'weekend'      => '🌅',
-    'game'         => '🎮',
-    'service'      => '⚡',
-    'announcement' => '📢',
-    'special'      => '⭐',
+    'package'      => 'fa-gift',
+    'weekend'      => 'fa-calendar-star',
+    'game'         => 'fa-gamepad',
+    'service'      => 'fa-bolt',
+    'announcement' => 'fa-bullhorn',
+    'special'      => 'fa-star',
 ];
 ?>
 
@@ -102,12 +102,17 @@ $dealIcons = [
     <?php else: ?>
       <div class="grid-3" style="gap:1.5rem;">
         <?php foreach ($deals as $i => $deal): ?>
-        <div class="deal-card" data-aos="fade-up" data-aos-delay="<?= $i * 100 ?>">
+        <div class="deal-card" onclick="fetchAndShowItem('deal', <?= $deal['id'] ?>)" style="cursor:pointer;" data-aos="fade-up" data-aos-delay="<?= $i * 100 ?>">
+          <?php if (!empty($deal['image_path'])): ?>
+            <img src="<?= e($deal['image_path']) ?>" alt="<?= e($deal['title']) ?>" class="deal-card-img">
+          <?php endif; ?>
           <span class="deal-ribbon"><?= ucfirst(e($deal['deal_type'])) ?></span>
           <div class="deal-body">
-            <div class="deal-icon">
-              <?= $dealIcons[$deal['deal_type']] ?? '🔥' ?>
+            <?php if (empty($deal['image_path'])): ?>
+            <div class="deal-icon-fa">
+              <i class="fas <?= $dealIcons[$deal['deal_type']] ?? 'fa-fire' ?>"></i>
             </div>
+            <?php endif; ?>
             <div class="deal-title"><?= e($deal['title']) ?></div>
             <div class="deal-desc"><?= e($deal['description']) ?></div>
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -146,9 +151,9 @@ $dealIcons = [
     <?php else: ?>
       <div class="grid-4" data-aos="fade-up" data-aos-delay="150">
         <?php foreach ($featured as $item): ?>
-        <div class="menu-card">
+        <div class="menu-card" onclick="fetchAndShowItem('menu', <?= $item['id'] ?>)" style="cursor:pointer;">
           <img src="<?= $item['image_path'] ? e($item['image_path']) : 'https://placehold.co/400x300/1A1A1A/E8500A?text=' . urlencode($item['name']) ?>"
-               alt="<?= e($item['name']) ?>">
+               alt="<?= e($item['name']) ?>" loading="lazy">
           <div class="menu-body">
             <div class="menu-name"><?= e($item['name']) ?></div>
             <div class="menu-desc"><?= e($item['description']) ?></div>

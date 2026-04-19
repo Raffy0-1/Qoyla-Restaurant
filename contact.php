@@ -30,6 +30,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
         $stmt->execute([$name, $phone, $email, $message, $form_type]);
 
+        if (!empty($email)) {
+            $subject = $form_type === 'complaint' ? 'Qoyla: Your Complaint has been Received' : 'Qoyla: We received your message';
+            $bodyHTML = "
+                <h2 style='color:#E8500A'>Hello " . e($name) . ",</h2>
+                <p>We have received your " . ($form_type === 'complaint' ? "complaint" : "message") . " and our team will review it shortly.</p>
+                <p><strong>You wrote:</strong><br/><i>" . nl2br(e($message)) . "</i></p>
+                <p>Thank you for reaching out to Qoyla.</p>
+            ";
+            sendQoylaEmail($email, $subject, $bodyHTML);
+        }
+
+        $adminEmail = 'admin@qoyla.pk'; 
+        $adminSubject = "New " . ucfirst($form_type) . " received from " . e($name);
+        $adminBody = "
+            <h2 style='color:#E8500A'>New " . ucfirst($form_type) . "</h2>
+            <p><strong>Name:</strong> " . e($name) . "</p>
+            <p><strong>Phone:</strong> " . e($phone) . "</p>
+            <p><strong>Email:</strong> " . e($email) . "</p>
+            <p><strong>Message:</strong><br/>" . nl2br(e($message)) . "</p>
+            <a href='https://qoyla.pk/admin/index.php?page=messages' style='background:#E8500A;color:#fff;padding:10px;text-decoration:none;'>View in Admin Panel</a>
+        ";
+        sendQoylaEmail($adminEmail, $adminSubject, $adminBody);
+
         if ($form_type === 'complaint') {
             setFlash('success', 'Your complaint has been submitted. Management will review it shortly.');
         } else {
@@ -68,39 +91,45 @@ include 'includes/header.php';
 
         <div style="display:flex;flex-direction:column;gap:1.25rem;margin-bottom:2.5rem;">
 
-          <a href="tel:+923001234567"
-             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:all 0.3s;"
-             onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+          <!-- PLACEHOLDER: Replace href with real phone number: tel:+92XXXXXXXXXX -->
+          <a href="tel:+92XXXXXXXXXX"
+             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:var(--transition);"
+             class="contact-info-link">
             <div style="width:44px;height:44px;border-radius:12px;background:var(--flame-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <i class="fas fa-phone" style="color:var(--flame-orange);"></i>
             </div>
             <div>
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;">Phone</div>
-              <div style="font-weight:700;">+92 300 1234567</div>
+              <!-- PLACEHOLDER: Replace with real phone number -->
+              <div style="font-weight:700;">+92 XXX XXXXXXX <span class="info-placeholder-note">Set before launch</span></div>
             </div>
           </a>
 
+          <!-- PLACEHOLDER: Replace href with real email: mailto:real@domain.pk -->
           <a href="mailto:info@qoyla.pk"
-             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:all 0.3s;"
-             onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:var(--transition);"
+             class="contact-info-link">
             <div style="width:44px;height:44px;border-radius:12px;background:var(--flame-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <i class="fas fa-envelope" style="color:var(--flame-orange);"></i>
             </div>
             <div>
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;">Email</div>
-              <div style="font-weight:700;">info@qoyla.pk</div>
+              <!-- PLACEHOLDER: Replace with real email address -->
+              <div style="font-weight:700;">info@qoyla.pk <span class="info-placeholder-note">Set before launch</span></div>
             </div>
           </a>
 
+          <!-- PLACEHOLDER: Replace href with real WhatsApp: https://wa.me/92XXXXXXXXXX -->
           <a href="https://wa.me/923001234567"
-             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:all 0.3s;"
-             onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+             style="display:flex;align-items:center;gap:1rem;padding:1.1rem 1.25rem;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text-body);transition:var(--transition);"
+             class="contact-info-link" target="_blank" rel="noopener noreferrer">
             <div style="width:44px;height:44px;border-radius:12px;background:rgba(37,211,102,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <i class="fab fa-whatsapp" style="color:#25D366;"></i>
             </div>
             <div>
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;">WhatsApp</div>
-              <div style="font-weight:700;">Message Us</div>
+              <!-- PLACEHOLDER: Replace with real WhatsApp number -->
+              <div style="font-weight:700;">Message Us <span class="info-placeholder-note">Set before launch</span></div>
             </div>
           </a>
 
@@ -116,13 +145,16 @@ include 'includes/header.php';
         </div>
 
         <!-- Google Maps placeholder -->
-        <!-- REPLACE the div below with your real Google Maps iframe when ready -->
-        <div style="background:#E8E2DA;border-radius:var(--radius-md);height:240px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-          <div style="text-align:center;color:var(--text-muted);">
-            <i class="fas fa-map-marked-alt" style="font-size:2.5rem;color:var(--flame-orange);margin-bottom:0.75rem;display:block;"></i>
-            <p style="font-weight:700;font-size:0.9rem;">Add your Google Maps embed here</p>
-            <p style="font-size:0.8rem;">Replace this div with &lt;iframe src="your google maps link"&gt;</p>
-          </div>
+        <!-- Google Maps replaced with OpenStreetMap embed (no API key required) -->
+        <!-- PLACEHOLDER: Update coordinates (lat, lon) and marker to match real restaurant location -->
+        <div class="map-embed-container">
+          <iframe
+            src="https://www.openstreetmap.org/export/embed.html?bbox=71.4749%2C30.1075%2C71.5749%2C30.2075&layer=mapnik&marker=30.1575%2C71.5249"
+            title="Qoyla Restaurant Location — Multan"
+            allowfullscreen
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
         </div>
       </div>
 

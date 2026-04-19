@@ -35,7 +35,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$userId]);
 $recentVisits = $stmt->fetchAll();
 
-// Points history last 30 days
+// Points history last 30 days (legacy)
 $stmt = $pdo->prepare("
     SELECT * FROM points_history
     WHERE customer_id = ?
@@ -45,6 +45,27 @@ $stmt = $pdo->prepare("
 $stmt->execute([$userId]);
 $transferHistory = $stmt->fetchAll();
 
+// Fetch fully detailed Points Ledger
+$stmt = $pdo->prepare("
+    SELECT * FROM points_log
+    WHERE customer_id = ?
+    ORDER BY created_at DESC
+");
+$stmt->execute([$userId]);
+$pointsLedger = $stmt->fetchAll();
+
+// Fetch My Messages
+$stmt = $pdo->prepare("
+    SELECT cm.*, mr.reply_text, mr.replied_at 
+    FROM contact_messages cm 
+    LEFT JOIN message_replies mr ON cm.id = mr.message_id 
+    WHERE cm.phone = ? OR cm.email = ? 
+    ORDER BY cm.submitted_at DESC
+");
+$stmt->execute([$customer['phone'], $customer['email']]);
+$myMessages = $stmt->fetchAll();
+
+
 // Active deals
 $deals = $pdo->query("SELECT * FROM deals WHERE is_active = 1 ORDER BY id DESC")->fetchAll();
 
@@ -53,42 +74,127 @@ $transferError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'transfer') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     
-    $points       = (int)($_POST['points'] ?? 0);
-    $transferType = $_POST['transfer_type'] ?? 'admin';
+    $points           = (int)($_POST['points'] ?? 0);
+    $transferType     = $_POST['transfer_type'] ?? 'admin';
+    $recipientPhone   = trim($_POST['recipient_phone'] ?? '');
 
     if ($points <= 0) {
         $transferError = 'Please enter a valid number of points.';
     } elseif ($points > $customer['total_points']) {
         $transferError = 'You don\'t have enough points.';
+    } elseif ($transferType === 'customer' && empty($recipientPhone)) {
+        $transferError = 'Please enter the recipient\'s phone number.';
     } else {
-        try {
-            $pdo->beginTransaction();
-            
-            // Deduct points from customer
-            $pdo->prepare("UPDATE customers SET total_points = total_points - ? WHERE id = ?")
-                ->execute([$points, $userId]);
 
-            // Log in history
-            $desc = 'Transferred to ' . ucfirst($transferType);
-            $pdo->prepare("
-                INSERT INTO points_history (customer_id, points, type, description, date)
-                VALUES (?, ?, 'transferred', ?, CURDATE())
-            ")->execute([$userId, $points, $desc]);
+        // For customer transfers: look up recipient first (before opening transaction)
+        $recipient = null;
+        if ($transferType === 'customer') {
+            $rStmt = $pdo->prepare("SELECT id, name, phone FROM customers WHERE phone = ? LIMIT 1");
+            $rStmt->execute([$recipientPhone]);
+            $recipient = $rStmt->fetch();
 
-            $pdo->commit();
-
-            // Refresh customer data
-            $stmt = $pdo->prepare("SELECT * FROM customers WHERE id = ?");
-            $stmt->execute([$userId]);
-            $customer = $stmt->fetch();
-
-            setFlash('success', $points . ' points transferred successfully!');
-            header('Location: /qoyla/dashboard/index.php');
-            exit;
-        } catch (\Exception $e) {
-            $pdo->rollBack();
-            $transferError = 'An error occurred during transfer. Please try again.';
+            if (!$recipient) {
+                $transferError = 'No customer found with phone number "' . htmlspecialchars($recipientPhone, ENT_QUOTES, 'UTF-8') . '". Please check and try again.';
+            } elseif ($recipient['id'] === $userId) {
+                $transferError = 'You cannot transfer points to yourself.';
+            }
         }
+
+        if (!$transferError) {
+            try {
+                $pdo->beginTransaction();
+
+                // 1. Deduct points from sender
+                $pdo->prepare("UPDATE customers SET total_points = total_points - ? WHERE id = ?")
+                    ->execute([$points, $userId]);
+
+                // 2. Log sender's deduction in history and points_log
+                $desc = match ($transferType) {
+                    'customer' => 'Transferred to ' . ($recipient['name'] ?? 'Customer'),
+                    'hotel'    => 'Transferred to Hotel',
+                    default    => 'Transferred to Admin (Discount Redemption)',
+                };
+                $pdo->prepare("
+                    INSERT INTO points_history (customer_id, points, type, description, date)
+                    VALUES (?, ?, 'transferred', ?, CURDATE())
+                ")->execute([$userId, $points, $desc]);
+                
+                $pdo->prepare("
+                    INSERT INTO points_log (customer_id, change_amount, reason, expires_at)
+                    VALUES (?, ?, ?, NULL)
+                ")->execute([$userId, -$points, $desc]);
+
+                // 3. If customer transfer: credit recipient & log their history
+                if ($transferType === 'customer' && $recipient) {
+                    $pdo->prepare("UPDATE customers SET total_points = total_points + ? WHERE id = ?")
+                        ->execute([$points, $recipient['id']]);
+
+                    $rcvDesc = 'Received from ' . ($customer['name'] ?? 'Member #' . $customer['sr_no']);
+                    $pdo->prepare("
+                        INSERT INTO points_history (customer_id, points, type, description, date)
+                        VALUES (?, ?, 'adjusted', ?, CURDATE())
+                    ")->execute([
+                        $recipient['id'],
+                        $points,
+                        $rcvDesc
+                    ]);
+                    
+                    $pdo->prepare("
+                        INSERT INTO points_log (customer_id, change_amount, reason, expires_at)
+                        VALUES (?, ?, ?, DATE_ADD(CURDATE(), INTERVAL 6 MONTH))
+                    ")->execute([
+                        $recipient['id'],
+                        $points,
+                        $rcvDesc
+                    ]);
+                }
+
+                $pdo->commit();
+
+                // Refresh sender's data
+                $stmt = $pdo->prepare("SELECT * FROM customers WHERE id = ?");
+                $stmt->execute([$userId]);
+                $customer = $stmt->fetch();
+
+                $successMsg = $points . ' points transferred successfully!';
+                if ($transferType === 'customer' && $recipient) {
+                    $successMsg .= ' ' . htmlspecialchars($recipient['name'], ENT_QUOTES, 'UTF-8') . ' has received the points.';
+                }
+                setFlash('success', $successMsg);
+                header('Location: /qoyla/dashboard/index.php');
+                exit;
+            } catch (\Exception $e) {
+                $pdo->rollBack();
+                $transferError = 'An error occurred during transfer. Please try again.';
+            }
+        }
+    }
+}
+
+// Handle Change Password form submission
+$passwordError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    verifyCsrfToken($_POST['csrf_token'] ?? '');
+    
+    $currentPass = $_POST['current_password'] ?? '';
+    $newPass     = $_POST['new_password'] ?? '';
+    $confirmPass = $_POST['confirm_password'] ?? '';
+
+    if (empty($currentPass) || empty($newPass) || empty($confirmPass)) {
+        $passwordError = 'Please fill in all password fields.';
+    } elseif (!password_verify($currentPass, $customer['password'])) {
+        $passwordError = 'Current password is incorrect.';
+    } elseif (strlen($newPass) < 6) {
+        $passwordError = 'New password must be at least 6 characters.';
+    } elseif ($newPass !== $confirmPass) {
+        $passwordError = 'New passwords do not match.';
+    } else {
+        $hashedPass = password_hash($newPass, PASSWORD_BCRYPT);
+        $pdo->prepare("UPDATE customers SET password = ? WHERE id = ?")
+            ->execute([$hashedPass, $userId]);
+        setFlash('success', 'Password changed successfully!');
+        header('Location: /qoyla/dashboard/index.php');
+        exit;
     }
 }
 
@@ -265,6 +371,131 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
       </div>
 
     </div>
+    
+    <!-- Row 3: Points Ledger & Password -->
+    <div class="dash-layout" style="margin-top:2.5rem;">
+      <!-- FULL POINTS LEDGER -->
+      <div class="stat-card" data-aos="fade-up">
+        <h4>Points Ledger 
+           <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">(Full History)</span>
+        </h4>
+        <?php if (empty($pointsLedger)): ?>
+          <p style="font-size:0.88rem;color:var(--text-muted);">No points logged yet.</p>
+        <?php else: ?>
+          <div style="border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow:hidden;max-height:400px;overflow-y:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Reason</th>
+                  <th>Amount</th>
+                  <th>Expiry Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($pointsLedger as $pl):
+                  $isPositive = $pl['change_amount'] > 0;
+                  $color      = $isPositive ? '#16A34A' : '#DC2626';
+                  $sign       = $isPositive ? '+' : '';
+                  // Highlight expiry < 30 days
+                  $expiresStyle = '';
+                  if ($pl['expires_at']) {
+                      $daysLeft = (strtotime($pl['expires_at']) - time()) / (60*60*24);
+                      if ($daysLeft > 0 && $daysLeft <= 30) {
+                          $expiresStyle = 'color:var(--flame-orange);font-weight:bold;';
+                      }
+                  }
+                ?>
+                  <tr style="background:white;border-bottom:1px solid var(--border-light);">
+                    <td style="font-size:0.87rem;"><?= date('d M Y', strtotime($pl['created_at'])) ?></td>
+                    <td style="font-size:0.87rem;"><?= e($pl['reason']) ?></td>
+                    <td style="font-weight:700;color:<?= $color ?>;font-size:0.87rem;">
+                      <?= $sign ?><?= number_format($pl['change_amount']) ?> pts
+                    </td>
+                    <td style="font-size:0.87rem;<?= $expiresStyle ?>">
+                      <?= $pl['expires_at'] ? date('d M Y', strtotime($pl['expires_at'])) : '—' ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <!-- CHANGE PASSWORD -->
+      <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+        <h4>Change Password</h4>
+        <?php if (!empty($passwordError)): ?>
+          <div class="flash flash-error" style="margin-bottom:1rem;position:relative;animation:none;">
+            <i class="fas fa-exclamation-circle"></i> <?= e($passwordError) ?>
+          </div>
+        <?php endif; ?>
+        <form method="POST" action="/qoyla/dashboard/index.php" data-loading>
+          <input type="hidden" name="action" value="change_password">
+          <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+          
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="current_password" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password" class="form-input" placeholder="Min 6 characters" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" name="confirm_password" class="form-input" required>
+          </div>
+          <button type="submit" class="btn-qoyla-outline" style="width:100%;justify-content:center;margin-top:0.5rem;">
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Row 4: My Messages -->
+    <div class="dash-layout" style="margin-top:2.5rem;grid-template-columns:1fr;">
+      <div class="stat-card" data-aos="fade-up">
+        <h4>My Messages & Complaints</h4>
+        <?php if (empty($myMessages)): ?>
+          <p style="font-size:0.88rem;color:var(--text-muted);">You have not sent any messages or complaints.</p>
+        <?php else: ?>
+          <div style="display:flex;flex-direction:column;gap:1.5rem;">
+            <?php foreach ($myMessages as $msg): ?>
+              <div style="border:1px solid var(--border-light);border-left:4px solid var(--flame-orange);border-radius:var(--radius-sm);background:white;padding:1.5rem;">
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-light);padding-bottom:0.75rem;margin-bottom:0.75rem;">
+                  <span style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);font-weight:700;letter-spacing:1px;">
+                    <?= $msg['form_type'] === 'complaint' ? '<i class="fas fa-exclamation-triangle" style="color:var(--flame-orange)"></i> Complaint' : '<i class="fas fa-comment" style="color:var(--text-muted)"></i> Inquiry' ?>
+                  </span>
+                  <span style="font-size:0.8rem;color:var(--text-muted);">
+                    <?= date('d M Y, h:i A', strtotime($msg['created_at'])) ?>
+                  </span>
+                </div>
+                <div style="font-size:0.95rem;line-height:1.6;color:var(--text-body);">
+                  <?= nl2br(e($msg['message'])) ?>
+                </div>
+                
+                <?php if ($msg['reply_text']): ?>
+                  <div style="margin-top:1.5rem;padding:1rem;background:var(--off-white);border-radius:var(--radius-sm);">
+                    <div style="font-size:0.8rem;color:var(--flame-orange);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin-bottom:0.5rem;">
+                      <i class="fas fa-reply"></i> Admin Reply
+                    </div>
+                    <div style="font-size:0.9rem;line-height:1.5;color:var(--charcoal-black);">
+                      <?= nl2br(e($msg['reply_text'])) ?>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
+                      Replies at <?= date('d M Y, h:i A', strtotime($msg['replied_at'])) ?>
+                    </div>
+                  </div>
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+    
   </div>
 </div>
 
@@ -282,7 +513,7 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
         <?= number_format($customer['total_points']) ?> points
       </strong> available to transfer.
     </p>
-    <form method="POST" action="/qoyla/dashboard/index.php">
+    <form method="POST" action="/qoyla/dashboard/index.php" data-loading>
       <input type="hidden" name="action" value="transfer">
       <div class="form-group">
         <label class="form-label">Points to Transfer</label>

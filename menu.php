@@ -74,7 +74,7 @@ $categories = [
                data-category="<?= e($item['category']) ?>"
                data-aos="fade-up"
                data-aos-delay="<?= ($i % 4) * 75 ?>">
-            <div class="menu-card">
+            <div class="menu-card" onclick="fetchAndShowItem('<?= $item['category'] === 'deals' ? 'deal' : 'menu' ?>', <?= $item['id'] ?>)" style="cursor:pointer;">
               <img src="<?= $item['image_path']
                             ? e($item['image_path'])
                             : 'https://placehold.co/400x300/1A1A1A/E8500A?text=' . urlencode($item['name']) ?>"

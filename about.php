@@ -76,17 +76,17 @@ session_start();
     </div>
     <div class="grid-3">
       <div class="qoyla-card" style="padding:2rem; text-align:center;" data-aos="fade-up" data-aos-delay="0">
-        <div style="font-size:2.5rem; margin-bottom:1rem;">🔥</div>
+        <div class="feature-icon"><i class="fas fa-fire"></i></div>
         <h3 style="font-family:'Cinzel',serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem;">Real Charcoal Only</h3>
         <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.8;">No gas, no shortcuts. Every single dish goes over genuine charcoal — the flavour speaks for itself.</p>
       </div>
       <div class="qoyla-card" style="padding:2rem; text-align:center;" data-aos="fade-up" data-aos-delay="100">
-        <div style="font-size:2.5rem; margin-bottom:1rem;">🏔️</div>
+        <div class="feature-icon"><i class="fas fa-mountain"></i></div>
         <h3 style="font-family:'Cinzel',serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem;">Pahri Pathani Recipes</h3>
         <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.8;">Authentic mountain-cuisine recipes — Dumpukht, Green Chicken, Khds Keema — you won't find these everywhere.</p>
       </div>
       <div class="qoyla-card" style="padding:2rem; text-align:center;" data-aos="fade-up" data-aos-delay="200">
-        <div style="font-size:2.5rem; margin-bottom:1rem;">⭐</div>
+        <div class="feature-icon"><i class="fas fa-crown"></i></div>
         <h3 style="font-family:'Cinzel',serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem;">Loyalty That Rewards</h3>
         <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.8;">Every visit earns you points. Redeem for discounts, special access, and more. Because you deserve it.</p>
       </div>
@@ -105,7 +105,7 @@ session_start();
     <div class="grid-4">
       <div class="qoyla-card" style="padding:2rem; text-align:center;" data-aos="fade-up" data-aos-delay="0">
         <img src="https://images.unsplash.com/photo-1583394293214-0b3e3c0b6b06?w=300&q=80" alt="Ustad Rasheed"
-             style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--flame-orange);margin:0 auto 1rem;">
+             class="team-avatar" loading="lazy">
         <h4 style="font-family:'Cinzel',serif;font-size:0.95rem;font-weight:700;margin-bottom:0.25rem;">Ustad Rasheed</h4>
         <p style="color:var(--flame-orange);font-size:0.8rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Head Chef</p>
         <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;line-height:1.6;">20 years over the charcoal. Dumpukht is his legacy.</p>

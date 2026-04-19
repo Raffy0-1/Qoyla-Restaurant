@@ -73,18 +73,7 @@ function initGalleryFilter() {
 }
 document.addEventListener('DOMContentLoaded', initGalleryFilter);
 
-/* ---- Admin live search ---- */
-function initAdminSearch() {
-  const searchInput = document.getElementById('adminSearch');
-  if (!searchInput) return;
-  searchInput.addEventListener('input', function () {
-    const q = this.value.toLowerCase();
-    document.querySelectorAll('.admin-table tbody tr').forEach(row => {
-      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-  });
-}
-document.addEventListener('DOMContentLoaded', initAdminSearch);
+/* ---- Admin live search (initialized below with scoped version) ---- */
 
 /* ---- Modal helpers ---- */
 function openModal(id) {
@@ -129,7 +118,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-/* ---- Admin tab navigation (inventory / workers) ---- */
+/* ---- Admin tab navigation (inventory) ---- */
+/* NOTE: HTML calls switchInvTab(); this alias keeps both names working */
 function switchAdminTab(tabId, btn) {
   document.querySelectorAll('.admin-tab-content').forEach(t => t.style.display = 'none');
   document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
@@ -137,7 +127,44 @@ function switchAdminTab(tabId, btn) {
   if (target) target.style.display = 'block';
   if (btn) btn.classList.add('active');
 }
+/* Alias used in admin/index.php inventory section */
+function switchInvTab(tabId, btn) { switchAdminTab(tabId, btn); }
+
 document.addEventListener('DOMContentLoaded', function () {
   const firstTab = document.querySelector('.admin-tab-btn');
   if (firstTab) firstTab.click();
+});
+
+/* ---- Close modal on ESC key ---- */
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+/* ---- Admin search (scoped to visible rows only) ---- */
+document.addEventListener('DOMContentLoaded', function () {
+  const searchInputs = document.querySelectorAll('.admin-search-input');
+  searchInputs.forEach(input => {
+    input.addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      // Only search visible table rows in case of tabbed sections
+      document.querySelectorAll('.admin-table tbody tr:not([style*="display: none"])').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  });
+});
+
+/* ---- Flash Message Auto-Dismiss ---- */
+document.addEventListener('DOMContentLoaded', function () {
+  const flashes = document.querySelectorAll('.flash');
+  flashes.forEach(flash => {
+    // Dismiss after 4 seconds
+    setTimeout(() => {
+      flash.classList.add('flash-hiding');
+      // Remove from DOM after animation completes
+      setTimeout(() => flash.remove(), 500);
+    }, 4000);
+  });
 });

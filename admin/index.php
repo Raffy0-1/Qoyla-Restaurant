@@ -65,6 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $pdo->prepare("INSERT INTO points_history (customer_id,points,type,description,date,added_by) VALUES(?,?,?,?,CURDATE(),?)")
             ->execute([$customerId, $points, $type, $desc, $_SESSION['admin_id']]);
+        
+        // Log explicitly in points_log
+        $signedPoints = $type === 'redeemed' ? -$points : $points;
+        $pdo->prepare("INSERT INTO points_log (customer_id,change_amount,reason,expires_at) VALUES(?,?,?,?)")
+            ->execute([$customerId, $signedPoints, $desc . ' (by Admin)', $type === 'redeemed' ? null : date('Y-m-d', strtotime('+6 months'))]);
+
         // Also record as a visit if type is 'earned'
         if ($type === 'earned') {
             $pdo->prepare("INSERT INTO visits (customer_id,visit_date,points_earned,notes,added_by) VALUES(?,CURDATE(),?,?,?)")
@@ -187,6 +193,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
     }
 
+    // --- EDIT MENU ITEM ---
+    if ($action === 'edit_menu_item') {
+        $d = $_POST;
+        $itemId = (int)$d['item_id'];
+        // Fetch existing image path
+        $existing = $pdo->prepare("SELECT image_path FROM menu_items WHERE id=?");
+        $existing->execute([$itemId]);
+        $imagePath = $existing->fetchColumn();
+
+        if (!empty($_FILES['image']['tmp_name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES['image']['tmp_name']);
+            finfo_close($finfo);
+            $allowed   = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+            $imageInfo = @getimagesize($_FILES['image']['tmp_name']);
+            if (array_key_exists($mime, $allowed) && $imageInfo !== false && $_FILES['image']['size'] <= 5*1024*1024) {
+                $ext  = $allowed[$mime];
+                $name = 'menu_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                $dest = __DIR__ . '/../uploads/menu/' . $name;
+                if (!is_dir(__DIR__ . '/../uploads/menu')) mkdir(__DIR__ . '/../uploads/menu', 0755, true);
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
+                    $imagePath = '/qoyla/uploads/menu/' . $name;
+                }
+            }
+        }
+        $pdo->prepare("UPDATE menu_items SET category=?,name=?,description=?,price=?,is_available=?,is_featured=?,image_path=? WHERE id=?")
+            ->execute([$d['category'],$d['name'],$d['description']??null,(float)$d['price'],isset($d['is_available'])?1:0,isset($d['is_featured'])?1:0,$imagePath,$itemId]);
+        setFlash('success', 'Menu item updated.');
+        header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
+    }
+
     // --- ADD DEAL ---
     if ($action === 'add_deal') {
         $d = $_POST;
@@ -230,9 +267,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
     }
 
+    // --- EDIT DEAL ---
+    if ($action === 'edit_deal') {
+        $d = $_POST;
+        $dealId = (int)$d['deal_id'];
+        $existing = $pdo->prepare("SELECT image_path FROM deals WHERE id=?");
+        $existing->execute([$dealId]);
+        $imagePath = $existing->fetchColumn();
+
+        if (!empty($_FILES['image']['tmp_name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES['image']['tmp_name']);
+            finfo_close($finfo);
+            $allowed   = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+            $imageInfo = @getimagesize($_FILES['image']['tmp_name']);
+            if (array_key_exists($mime, $allowed) && $imageInfo !== false && $_FILES['image']['size'] <= 5*1024*1024) {
+                $ext  = $allowed[$mime];
+                $name = 'deal_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                $dest = __DIR__ . '/../uploads/deals/' . $name;
+                if (!is_dir(__DIR__ . '/../uploads/deals')) mkdir(__DIR__ . '/../uploads/deals', 0755, true);
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
+                    $imagePath = '/qoyla/uploads/deals/' . $name;
+                }
+            }
+        }
+        $pdo->prepare("UPDATE deals SET title=?,description=?,deal_type=?,discount_percent=?,points_multiplier=?,is_active=?,start_date=?,end_date=?,image_path=? WHERE id=?")
+            ->execute([$d['title'],$d['description']??null,$d['deal_type'],(int)($d['discount_percent']??0),(float)($d['points_multiplier']??1),isset($d['is_active'])?1:0,$d['start_date']??null,$d['end_date']??null,$imagePath,$dealId]);
+        setFlash('success', 'Deal updated.');
+        header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
+    }
+
     // --- MARK MESSAGE AS READ ---
     if ($action === 'mark_read') {
         $pdo->prepare("UPDATE contact_messages SET is_read=1 WHERE id=?")->execute([(int)$_POST['msg_id']]);
+        header("Location: /qoyla/admin/index.php?page=messages"); exit;
+    }
+
+    // --- EDIT WORKER ---
+    if ($action === 'edit_worker') {
+        $d = $_POST;
+        $pdo->prepare("UPDATE workers SET name=?, role=?, phone1=?, phone2=? WHERE id=?")
+            ->execute([$d['name'], $d['role']??null, $d['phone1']??null, $d['phone2']??null, (int)$d['worker_id']]);
+        setFlash('success', 'Worker details updated.');
+        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+    }
+
+    // --- SOFT DELETE WORKER ---
+    if ($action === 'delete_worker') {
+        $id = (int)$_POST['worker_id'];
+        $pdo->prepare("UPDATE workers SET is_active=0 WHERE id=?")->execute([$id]);
+        setFlash('success', 'Worker has been deactivated (soft delete).');
+        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+    }
+
+    // --- REPLY MESSAGE ---
+    if ($action === 'reply_message') {
+        $msgId = (int)$_POST['message_id'];
+        $reply = trim($_POST['reply_text'] ?? '');
+        
+        $msgRow = $pdo->prepare("SELECT * FROM contact_messages WHERE id=?");
+        $msgRow->execute([$msgId]);
+        $msg = $msgRow->fetch();
+
+        if ($msg && !empty($reply)) {
+            $pdo->prepare("INSERT INTO message_replies (message_id, reply_text) VALUES (?, ?)")
+                ->execute([$msgId, $reply]);
+            
+            // Send email to customer instantly
+            if (!empty($msg['email'])) {
+                $bodyHTML = "
+                    <h2 style='color:#E8500A'>Qoyla Management Reply</h2>
+                    <p>Dear " . e($msg['name']) . ",</p>
+                    <p>Regarding your recent message:</p>
+                    <blockquote style='border-left:3px solid #666;padding-left:10px;color:#999;'><i>" . nl2br(e($msg['message'])) . "</i></blockquote>
+                    <p><strong>Reply from our team:</strong></p>
+                    <p style='font-size:16px;'>" . nl2br(e($reply)) . "</p>
+                    <p>Best regards,<br>Qoyla Management</p>
+                ";
+                sendQoylaEmail($msg['email'], 'Qoyla: Reply to your message', $bodyHTML);
+            }
+
+            // Also mark as read
+            $pdo->prepare("UPDATE contact_messages SET is_read=1 WHERE id=?")->execute([$msgId]);
+
+            setFlash('success', 'Reply sent and saved successfully.');
+        } else {
+            setFlash('error', 'Message not found or reply is empty.');
+        }
         header("Location: /qoyla/admin/index.php?page=messages"); exit;
     }
 }
@@ -260,7 +381,7 @@ if ($activePage === 'inventory') {
     }
 }
 if ($activePage === 'workers') {
-    $data['workers'] = $pdo->query("SELECT * FROM workers ORDER BY name")->fetchAll();
+    $data['workers'] = $pdo->query("SELECT * FROM workers WHERE is_active = 1 ORDER BY name")->fetchAll();
 }
 if ($activePage === 'menu-mgmt') {
     $data['menu_items'] = $pdo->query("SELECT * FROM menu_items ORDER BY category, name")->fetchAll();
@@ -269,7 +390,15 @@ if ($activePage === 'deals-mgmt') {
     $data['deals'] = $pdo->query("SELECT * FROM deals ORDER BY is_active DESC, id DESC")->fetchAll();
 }
 if ($activePage === 'messages') {
-    $data['messages'] = $pdo->query("SELECT * FROM contact_messages ORDER BY is_read ASC, submitted_at DESC")->fetchAll();
+    $data['messages'] = $pdo->query("
+        SELECT cm.*, mr.reply_text, mr.replied_at 
+        FROM contact_messages cm 
+        LEFT JOIN message_replies mr ON cm.id = mr.message_id 
+        ORDER BY cm.is_read ASC, cm.submitted_at DESC
+    ")->fetchAll();
+}
+if ($activePage === 'customers') {
+    $data['points_logs'] = $pdo->query("SELECT * FROM points_log ORDER BY created_at DESC")->fetchAll();
 }
 ?>
 <!DOCTYPE html>
@@ -404,7 +533,10 @@ if ($activePage === 'messages') {
   <div class="admin-table-card">
     <div class="admin-table-header">
       <h3>All Members (<?= count($data['customers']) ?>)</h3>
-      <input type="text" id="adminSearch" class="admin-search" placeholder="🔍 Search name, phone, CNIC...">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="admin-search-input" placeholder="Search name, phone, CNIC...">
+      </div>
     </div>
     <div style="overflow-x:auto;">
       <table class="admin-table">
@@ -425,9 +557,13 @@ if ($activePage === 'messages') {
             <td><?= date('d M Y', strtotime($c['created_at'])) ?></td>
             <td>
               <div class="admin-actions">
-                <button class="btn-sm-action"
+                <button class="btn-sm-action" style="background:var(--flame-orange);border-color:var(--flame-orange);"
                         onclick="openPointsModal(<?= $c['id'] ?>, '<?= e($c['name']) ?>', <?= $c['total_points'] ?>)">
-                  <i class="fas fa-star"></i> Points
+                  <i class="fas fa-plus"></i> Points
+                </button>
+                <button class="btn-sm-action"
+                        onclick="openCustomerLedger(<?= $c['id'] ?>, '<?= e($c['name']) ?>', <?= $c['total_points'] ?>)">
+                  <i class="fas fa-list"></i> Ledger
                 </button>
                 <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this customer? This cannot be undone.')">
                   <input type="hidden" name="action" value="delete_customer">
@@ -451,7 +587,12 @@ if ($activePage === 'messages') {
 
 <!-- ===== INVENTORY ===== -->
 <?php elseif ($activePage === 'inventory'): ?>
-  <?php $invTabs = ['meats'=>'🥩 Meats','dairy'=>'🥛 Dairy','grocery'=>'🛒 Grocery','mandi'=>'🌾 Mandi']; ?>
+  <?php $invTabs = [
+    'meats'   => '<i class="fas fa-drumstick-bite"></i> Meats',
+    'dairy'   => '<i class="fas fa-glass-milk"></i> Dairy',
+    'grocery' => '<i class="fas fa-shopping-basket"></i> Grocery',
+    'mandi'   => '<i class="fas fa-seedling"></i> Mandi',
+  ]; ?>
   <div class="admin-topbar">
     <h1>Inventory</h1>
     <button class="btn-qoyla" onclick="openModal('addItemModal')">
@@ -532,7 +673,10 @@ if ($activePage === 'messages') {
   <div class="admin-table-card">
     <div class="admin-table-header">
       <h3>All Staff (<?= count($data['workers']) ?>)</h3>
-      <input type="text" id="adminSearch" class="admin-search" placeholder="🔍 Search worker...">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="admin-search-input" placeholder="Search worker...">
+      </div>
     </div>
     <div style="overflow-x:auto;">
       <table class="admin-table">
@@ -560,6 +704,16 @@ if ($activePage === 'messages') {
                         onclick="openComplaintModal(<?= $w['id'] ?>, '<?= e($w['name']) ?>')">
                   <i class="fas fa-flag"></i> Complaint
                 </button>
+                <button class="btn-sm-action"
+                        onclick="openEditWorker(<?= htmlspecialchars(json_encode($w)) ?>)">
+                  <i class="fas fa-pen"></i> Edit
+                </button>
+                <form method="POST" style="display:inline;" onsubmit="return confirm('Soft-delete this worker? They will no longer appear in active lists.')">
+                  <input type="hidden" name="action" value="delete_worker">
+                  <input type="hidden" name="worker_id" value="<?= $w['id'] ?>">
+                  <button type="submit" class="btn-sm-outline" style="color:#DC2626;border-color:#DC2626;">Del</button>
+                  <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                </form>
               </div>
             </td>
           </tr>
@@ -587,7 +741,10 @@ if ($activePage === 'messages') {
   <div class="admin-table-card">
     <div class="admin-table-header">
       <h3>All Items (<?= count($data['menu_items']) ?>)</h3>
-      <input type="text" id="adminSearch" class="admin-search" placeholder="🔍 Search dish...">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="admin-search-input" placeholder="Search dish...">
+      </div>
     </div>
     <div style="overflow-x:auto;">
       <table class="admin-table">
@@ -622,12 +779,17 @@ if ($activePage === 'messages') {
 </form>
             </td>
             <td>
-              <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this item?')">
-                <input type="hidden" name="action" value="delete_menu">
-                <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
-                <button type="submit" class="btn-sm-outline" style="color:#DC2626;border-color:#DC2626;">Delete</button>
-              <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+              <div class="admin-actions">
+                <button class="btn-sm-action" onclick="openEditMenuItem(<?= htmlspecialchars(json_encode($item)) ?>)">
+                  <i class="fas fa-pen"></i> Edit
+                </button>
+                <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this item?')">
+                  <input type="hidden" name="action" value="delete_menu">
+                  <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                  <button type="submit" class="btn-sm-outline" style="color:#DC2626;border-color:#DC2626;">Del</button>
+                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 </form>
+              </div>
             </td>
           </tr>
           <?php endforeach; ?>
@@ -680,13 +842,17 @@ if ($activePage === 'messages') {
 </form>
             </td>
             <td>
-              <form method="POST" style="display:inline;" onsubmit="return confirm('Delete deal?')">
-                <input type="hidden" name="action" value="delete_deal">
-                <input type="hidden" name="deal_id" value="<?= $d['id'] ?>">
-                <!-- Note: add DELETE action handler above if needed -->
-                <button type="submit" class="btn-sm-outline" style="color:#DC2626;border-color:#DC2626;">Del</button>
-              <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+              <div class="admin-actions">
+                <button class="btn-sm-action" onclick="openEditDeal(<?= htmlspecialchars(json_encode($d)) ?>)">
+                  <i class="fas fa-pen"></i> Edit
+                </button>
+                <form method="POST" style="display:inline;" onsubmit="return confirm('Delete deal?')">
+                  <input type="hidden" name="action" value="delete_deal">
+                  <input type="hidden" name="deal_id" value="<?= $d['id'] ?>">
+                  <button type="submit" class="btn-sm-outline" style="color:#DC2626;border-color:#DC2626;">Del</button>
+                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 </form>
+              </div>
             </td>
           </tr>
           <?php endforeach; ?>
@@ -724,16 +890,24 @@ if ($activePage === 'messages') {
             </td>
             <td style="white-space:nowrap;"><?= date('d M Y', strtotime($msg['submitted_at'])) ?></td>
             <td>
-              <?php if(!$msg['is_read']): ?>
-              <form method="POST" style="display:inline;">
-                <input type="hidden" name="action" value="mark_read">
-                <input type="hidden" name="msg_id" value="<?= $msg['id'] ?>">
-                <button type="submit" class="btn-sm-action">Mark Read</button>
-              <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-</form>
-              <?php else: ?>
-                <span style="font-size:0.78rem;color:var(--text-muted);">✓ Read</span>
-              <?php endif; ?>
+              <div class="admin-actions">
+                <?php if(!$msg['reply_text']): ?>
+                  <button class="btn-sm-action" onclick="openReplyModal(<?= $msg['id'] ?>, '<?= e($msg['name'] ?: 'Customer') ?>', `<?= htmlspecialchars($msg['message']) ?>`)">
+                    <i class="fas fa-reply"></i> Reply
+                  </button>
+                <?php else: ?>
+                  <span style="font-size:0.75rem;color:var(--flame-orange);font-weight:700;"><i class="fas fa-check-double"></i> Replied</span>
+                <?php endif; ?>
+                
+                <?php if(!$msg['is_read']): ?>
+                  <form method="POST" style="display:inline;">
+                    <input type="hidden" name="action" value="mark_read">
+                    <input type="hidden" name="msg_id" value="<?= $msg['id'] ?>">
+                    <button type="submit" class="btn-sm-outline">Mark Read</button>
+                    <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                  </form>
+                <?php endif; ?>
+              </div>
             </td>
           </tr>
           <?php endforeach; ?>
@@ -1008,6 +1182,143 @@ if ($activePage === 'messages') {
   </div>
 </div>
 
+<!-- Edit Worker Modal -->
+<div class="modal-overlay" id="editWorkerModal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Edit Worker</div><button class="modal-close" onclick="closeModal('editWorkerModal')">&times;</button></div>
+    <form method="POST">
+      <input type="hidden" name="action" value="edit_worker">
+      <input type="hidden" name="worker_id" id="editWorkerId">
+      <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="name" id="editWorkerName" class="form-input" required></div>
+      <div class="form-group"><label class="form-label">Role</label><input type="text" name="role" id="editWorkerRole" class="form-input" placeholder="e.g. Waiter"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label class="form-label">Phone 1</label><input type="tel" name="phone1" id="editWorkerPhone1" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Phone 2</label><input type="tel" name="phone2" id="editWorkerPhone2" class="form-input"></div>
+      </div>
+      <button type="submit" class="btn-qoyla" style="width:100%;justify-content:center;">Update Worker</button>
+      <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+    </form>
+  </div>
+</div>
+
+<!-- Reply Message Modal -->
+<div class="modal-overlay" id="replyMessageModal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Reply to Customer</div><button class="modal-close" onclick="closeModal('replyMessageModal')">&times;</button></div>
+    <div style="font-size:0.85rem;margin-bottom:1rem;color:var(--text-muted);">
+      <strong>Customer:</strong> <span id="replyCustomerName"></span><br>
+      <strong>Message:</strong> <span id="replyMessageText" style="display:block;background:var(--off-white);padding:0.5rem;border-radius:4px;margin-top:0.5rem;"></span>
+    </div>
+    <form method="POST" data-loading>
+      <input type="hidden" name="action" value="reply_message">
+      <input type="hidden" name="message_id" id="replyMessageId">
+      <div class="form-group"><label class="form-label">Your Reply</label><textarea name="reply_text" class="form-input" rows="4" required placeholder="Type your reply here..."></textarea></div>
+      <button type="submit" class="btn-qoyla" style="width:100%;justify-content:center;">Send Reply <i class="fas fa-paper-plane" style="margin-left:0.5rem;"></i></button>
+      <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+    </form>
+  </div>
+</div>
+
+<!-- Edit Menu Item Modal -->
+<div class="modal-overlay" id="editMenuModal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Edit Menu Item</div><button class="modal-close" onclick="closeModal('editMenuModal')">&times;</button></div>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="edit_menu_item">
+      <input type="hidden" name="item_id" id="editMenuId">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label class="form-label">Name *</label><input type="text" name="name" id="editMenuName" class="form-input" required></div>
+        <div class="form-group"><label class="form-label">Category *</label>
+          <select name="category" id="editMenuCategory" class="form-select" style="appearance:none;">
+            <option value="starter">Starter</option><option value="main_course">Main Course</option>
+            <option value="grill">Grill</option><option value="rice">Rice</option>
+            <option value="bread">Bread</option><option value="dessert">Dessert</option><option value="drink">Drink</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea name="description" id="editMenuDesc" class="form-input" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Price (Rs.) *</label><input type="number" name="price" id="editMenuPrice" class="form-input" step="0.01" required></div>
+      <div class="form-group">
+        <label class="form-label">Replace Image (optional)</label>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="form-input">
+        <div style="margin-top:0.5rem;"><img id="editMenuCurrentImg" src="" style="height:60px;border-radius:6px;display:none;"></div>
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-bottom:1.25rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;cursor:pointer;">
+          <input type="checkbox" name="is_available" id="editMenuAvail" value="1" style="accent-color:var(--flame-orange);"> Available on Menu
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;cursor:pointer;">
+          <input type="checkbox" name="is_featured" id="editMenuFeatured" value="1" style="accent-color:var(--flame-orange);"> Feature on Homepage
+        </label>
+      </div>
+      <button type="submit" class="btn-qoyla" style="width:100%;justify-content:center;">Save Changes</button>
+      <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+    </form>
+  </div>
+</div>
+
+<!-- Edit Deal Modal -->
+<div class="modal-overlay" id="editDealModal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Edit Deal</div><button class="modal-close" onclick="closeModal('editDealModal')">&times;</button></div>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="edit_deal">
+      <input type="hidden" name="deal_id" id="editDealId">
+      <div class="form-group"><label class="form-label">Deal Title *</label><input type="text" name="title" id="editDealTitle" class="form-input" required></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea name="description" id="editDealDesc" class="form-input" rows="2"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label class="form-label">Type</label>
+          <select name="deal_type" id="editDealType" class="form-select" style="appearance:none;">
+            <option value="package">Package</option><option value="weekend">Weekend</option>
+            <option value="game">Game Night</option><option value="service">Service</option>
+            <option value="announcement">Announcement</option><option value="special">Special</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Discount %</label><input type="number" name="discount_percent" id="editDealDiscount" class="form-input" min="0" max="100"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label class="form-label">Points Multiplier</label><input type="number" name="points_multiplier" id="editDealMult" class="form-input" step="0.1" min="1"></div>
+        <div class="form-group"><label class="form-label">Active?</label>
+          <div style="margin-top:0.75rem;"><label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="checkbox" name="is_active" id="editDealActive" value="1" style="accent-color:var(--flame-orange);"> Yes, show this deal
+          </label></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" name="start_date" id="editDealStart" class="form-input"></div>
+        <div class="form-group"><label class="form-label">End Date</label><input type="date" name="end_date" id="editDealEnd" class="form-input"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Replace Image (optional)</label>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="form-input">
+        <div style="margin-top:0.5rem;"><img id="editDealCurrentImg" src="" style="height:60px;border-radius:6px;display:none;"></div>
+      </div>
+      <button type="submit" class="btn-qoyla" style="width:100%;justify-content:center;">Save Changes</button>
+      <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+    </form>
+  </div>
+</div>
+
+<!-- Customer Ledger Modal -->
+<div class="modal-overlay" id="customerLedgerModal">
+  <div class="modal-box" style="max-width:700px;">
+    <div class="modal-header"><div class="modal-title" id="ledgerModalTitle">Points Ledger</div><button class="modal-close" onclick="closeModal('customerLedgerModal')">&times;</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <p style="font-size:0.92rem;margin:0;">Current Balance: <strong id="ledgerModalBalance" style="color:var(--flame-orange);"></strong></p>
+      <button class="btn-sm-action" id="ledgerAddPointsBtn" style="background:var(--flame-orange);">
+        <i class="fas fa-plus"></i> Add Points
+      </button>
+    </div>
+    <div style="border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow-y:auto;max-height:400px;">
+      <table class="admin-table">
+        <thead><tr><th>Date</th><th>Reason</th><th>Amount</th><th>Expiry</th></tr></thead>
+        <tbody id="ledgerTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script src="/qoyla/assets/js/main.js"></script>
 <script>
 // Points modal — fill with customer data
@@ -1018,11 +1329,66 @@ function openPointsModal(id, name, points) {
   openModal('pointsModal');
 }
 
+window.allPointsLogs = <?= json_encode($data['points_logs'] ?? []) ?>;
+function openCustomerLedger(customerId, customerName, totalPoints) {
+  document.getElementById('ledgerModalTitle').textContent = 'Points Ledger — ' + customerName;
+  document.getElementById('ledgerModalBalance').textContent = totalPoints.toLocaleString() + ' pts';
+  
+  // Set the "Add Points" button in ledger to open the points modal
+  document.getElementById('ledgerAddPointsBtn').onclick = () => {
+    closeModal('customerLedgerModal');
+    openPointsModal(customerId, customerName, totalPoints);
+  };
+  
+  const tbody = document.getElementById('ledgerTableBody');
+  tbody.innerHTML = '';
+  
+  const cLogs = window.allPointsLogs.filter(log => String(log.customer_id) === String(customerId));
+  if (cLogs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;">No history found.</td></tr>`;
+  } else {
+    cLogs.forEach(log => {
+      const isPositive = parseFloat(log.change_amount) > 0;
+      const color = isPositive ? '#16A34A' : '#DC2626';
+      const sign = isPositive ? '+' : '';
+      let expiresHtml = '—';
+      if (log.expires_at) {
+         expiresHtml = new Date(log.expires_at).toLocaleDateString();
+      }
+      tbody.innerHTML += `
+        <tr>
+          <td>${new Date(log.created_at).toLocaleDateString()}</td>
+          <td>${log.reason}</td>
+          <td style="color:${color};font-weight:bold;">${sign}${Math.abs(log.change_amount)} pts</td>
+          <td>${expiresHtml}</td>
+        </tr>
+      `;
+    });
+  }
+  openModal('customerLedgerModal');
+}
+
 // Complaint modal
 function openComplaintModal(id, name) {
   document.getElementById('complaintWorkerId').value = id;
   document.getElementById('complaintModalTitle').textContent = 'File Complaint — ' + name;
   openModal('complaintModal');
+}
+
+function openEditWorker(w) {
+  document.getElementById('editWorkerId').value = w.id;
+  document.getElementById('editWorkerName').value = w.name;
+  document.getElementById('editWorkerRole').value = w.role || '';
+  document.getElementById('editWorkerPhone1').value = w.phone1 || '';
+  document.getElementById('editWorkerPhone2').value = w.phone2 || '';
+  openModal('editWorkerModal');
+}
+
+function openReplyModal(msgId, customerName, messageText) {
+  document.getElementById('replyMessageId').value = msgId;
+  document.getElementById('replyCustomerName').textContent = customerName;
+  document.getElementById('replyMessageText').textContent = messageText;
+  openModal('replyMessageModal');
 }
 
 // Edit inventory item — populate modal from JSON
@@ -1060,6 +1426,44 @@ function previewUpload(input, previewId, placeholderId) {
     };
     reader.readAsDataURL(input.files[0]);
   }
+}
+
+// Edit Menu Item modal
+function openEditMenuItem(item) {
+  document.getElementById('editMenuId').value       = item.id;
+  document.getElementById('editMenuName').value     = item.name;
+  document.getElementById('editMenuDesc').value     = item.description || '';
+  document.getElementById('editMenuPrice').value    = item.price;
+  document.getElementById('editMenuAvail').checked    = item.is_available == 1;
+  document.getElementById('editMenuFeatured').checked = item.is_featured == 1;
+  // Set category dropdown
+  const catSel = document.getElementById('editMenuCategory');
+  for (let opt of catSel.options) { opt.selected = (opt.value === item.category); }
+  // Show current image thumbnail
+  const img = document.getElementById('editMenuCurrentImg');
+  if (item.image_path) { img.src = item.image_path; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+  openModal('editMenuModal');
+}
+
+// Edit Deal modal
+function openEditDeal(d) {
+  document.getElementById('editDealId').value       = d.id;
+  document.getElementById('editDealTitle').value    = d.title;
+  document.getElementById('editDealDesc').value     = d.description || '';
+  document.getElementById('editDealDiscount').value = d.discount_percent;
+  document.getElementById('editDealMult').value     = d.points_multiplier;
+  document.getElementById('editDealActive').checked = d.is_active == 1;
+  document.getElementById('editDealStart').value    = d.start_date || '';
+  document.getElementById('editDealEnd').value      = d.end_date   || '';
+  // Set type dropdown
+  const typeSel = document.getElementById('editDealType');
+  for (let opt of typeSel.options) { opt.selected = (opt.value === d.deal_type); }
+  // Show current image thumbnail
+  const img = document.getElementById('editDealCurrentImg');
+  if (d.image_path) { img.src = d.image_path; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+  openModal('editDealModal');
 }
 </script>
 </body>

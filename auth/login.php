@@ -7,9 +7,10 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
-// If already logged in, redirect away
+// If already logged in as customer, go to dashboard
 if (isset($_SESSION['user_id']))  { header('Location: /qoyla/dashboard/index.php'); exit; }
-if (isset($_SESSION['admin_id'])) { header('Location: /qoyla/admin/index.php');     exit; }
+// If already logged in as admin on THIS tab, go to admin panel
+// (But do NOT redirect here — let the form POST decide based on credentials)
 
 $loginError = '';
 
@@ -44,8 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $customer = $stmt->fetch();
 
         if ($customer && password_verify($password, $customer['password'])) {
-            // Customer login success
+            // Customer login success — clear any lingering admin session
             session_regenerate_id(true);
+            unset($_SESSION['admin_id'], $_SESSION['admin_name'], $_SESSION['admin_role']);
             $_SESSION['user_id']   = $customer['id'];
             $_SESSION['user_name'] = $customer['name'];
             $_SESSION['user_sr']   = $customer['sr_no'];
@@ -130,8 +132,8 @@ $pageTitle = 'Login | Qoyla Restaurant';
                  style="accent-color:var(--flame-orange);width:15px;height:15px;">
           Remember me for 30 days
         </label>
-        <a href="#" style="font-size:0.85rem;color:var(--flame-orange);font-weight:700;">
-          Forgot password?
+        <a href="#" class="link-disabled" title="Password reset is not yet available">
+          <i class="fas fa-lock"></i> Forgot password?
         </a>
       </div>
 
