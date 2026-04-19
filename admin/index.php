@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$phone]);
         if ($stmt->fetch()) {
             setFlash('error', "Phone number '{$phone}' is already registered.");
-            header("Location: /qoyla/admin/index.php?page=customers"); exit;
+            header("Location: ' . BASE_URL . 'admin/index.php?page=customers"); exit;
         }
 
         $pass  = password_hash('qoyla123', PASSWORD_BCRYPT); // default password
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("INSERT INTO customers (sr_no,name,phone,cnic,email,password) VALUES(?,?,?,?,?,?)")
             ->execute([$maxSr, $name, $phone, $cnic ?: null, $email ?: null, $pass]);
         setFlash('success', "Customer '{$name}' added. Default password: qoyla123");
-        header("Location: /qoyla/admin/index.php?page=customers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=customers"); exit;
     }
 
     // --- ADD POINTS to customer ---
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($points < 0) {
             setFlash('error', 'Points must be a positive number.');
-            header("Location: /qoyla/admin/index.php?page=customers"); exit;
+            header("Location: ' . BASE_URL . 'admin/index.php?page=customers"); exit;
         }
         $type       = $_POST['type'] ?? 'earned';    // earned / adjusted / redeemed
         $desc       = trim($_POST['description'] ?? 'Admin adjustment');
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$customerId, $points, $desc, $_SESSION['admin_id']]);
         }
         setFlash('success', "Points updated for customer.");
-        header("Location: /qoyla/admin/index.php?page=customers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=customers"); exit;
     }
 
     // --- DELETE CUSTOMER ---
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("DELETE FROM visits WHERE customer_id=?")->execute([$id]);
         $pdo->prepare("DELETE FROM customers WHERE id=?")->execute([$id]);
         setFlash('success', 'Customer deleted.');
-        header("Location: /qoyla/admin/index.php?page=customers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=customers"); exit;
     }
 
     // --- ADD INVENTORY ITEM ---
@@ -95,12 +95,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $d = $_POST;
         if ((float)$d['quantity'] < 0 || (float)($d['par_level']??0) < 0) {
             setFlash('error', 'Values cannot be negative.');
-            header("Location: /qoyla/admin/index.php?page=inventory"); exit;
+            header("Location: ' . BASE_URL . 'admin/index.php?page=inventory"); exit;
         }
         $pdo->prepare("INSERT INTO inventory (category,product_name,quantity,unit,par_level,reorder_level,description,supplier) VALUES(?,?,?,?,?,?,?,?)")
             ->execute([$d['category'],$d['product_name'],(float)$d['quantity'],$d['unit'],(float)($d['par_level']??0),(float)($d['reorder_level']??0),$d['description']??null,$d['supplier']??null]);
         setFlash('success', 'Inventory item added.');
-        header("Location: /qoyla/admin/index.php?page=inventory"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=inventory"); exit;
     }
 
     // --- UPDATE INVENTORY ITEM ---
@@ -108,20 +108,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $d = $_POST;
         if ((float)$d['quantity'] < 0 || (float)($d['par_level']??0) < 0) {
             setFlash('error', 'Values cannot be negative.');
-            header("Location: /qoyla/admin/index.php?page=inventory"); exit;
+            header("Location: ' . BASE_URL . 'admin/index.php?page=inventory"); exit;
         }
         [$status] = inventoryStatus((float)$d['quantity'],(float)($d['par_level']??0),(float)($d['reorder_level']??0));
         $pdo->prepare("UPDATE inventory SET product_name=?,quantity=?,unit=?,par_level=?,reorder_level=?,status=?,description=?,supplier=? WHERE id=?")
             ->execute([$d['product_name'],(float)$d['quantity'],$d['unit'],(float)($d['par_level']??0),(float)($d['reorder_level']??0),$status,$d['description']??null,$d['supplier']??null,(int)$d['item_id']]);
         setFlash('success', 'Item updated.');
-        header("Location: /qoyla/admin/index.php?page=inventory"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=inventory"); exit;
     }
 
     // --- DELETE INVENTORY ---
     if ($action === 'delete_inventory') {
         $pdo->prepare("DELETE FROM inventory WHERE id=?")->execute([(int)$_POST['item_id']]);
         setFlash('success', 'Item deleted.');
-        header("Location: /qoyla/admin/index.php?page=inventory"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=inventory"); exit;
     }
 
     // --- ADD WORKER ---
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("INSERT INTO workers (name,role,cnic,phone1,phone2,bank_account,referral,emergency_contact,description,joined_date,caution_reset_date) VALUES(?,?,?,?,?,?,?,?,?,?,DATE_ADD(CURDATE(),INTERVAL 3 MONTH))")
             ->execute([$d['name'],$d['role']??null,$d['cnic']??null,$d['phone1']??null,$d['phone2']??null,$d['bank_account']??null,$d['referral']??null,$d['emergency_contact']??null,$d['description']??null,$d['joined_date']??date('Y-m-d')]);
         setFlash('success', 'Worker added.');
-        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=workers"); exit;
     }
 
     // --- ADD WORKER COMPLAINT ---
@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("UPDATE workers SET caution_level=0, caution_reset_date=DATE_ADD(CURDATE(),INTERVAL 3 MONTH) WHERE id=? AND caution_reset_date < CURDATE()")
             ->execute([$workerId]);
         setFlash('success', 'Complaint filed and caution level updated.');
-        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=workers"); exit;
     }
 
     // --- ADD MENU ITEM ---
@@ -168,14 +168,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dest = __DIR__ . '/../uploads/menu/' . $name;
                 if (!is_dir(__DIR__ . '/../uploads/menu')) mkdir(__DIR__ . '/../uploads/menu', 0755, true);
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                    $imagePath = '/qoyla/uploads/menu/' . $name;
+                    $imagePath = '' . BASE_URL . 'uploads/menu/' . $name;
                 }
             }
         }
         $pdo->prepare("INSERT INTO menu_items (category,name,description,price,is_available,is_featured,image_path) VALUES(?,?,?,?,?,?,?)")
             ->execute([$d['category'],$d['name'],$d['description']??null,(float)$d['price'],isset($d['is_available'])?1:0,isset($d['is_featured'])?1:0,$imagePath]);
         setFlash('success', 'Menu item added.');
-        header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=menu-mgmt"); exit;
     }
 
     // --- TOGGLE MENU ITEM AVAILABILITY ---
@@ -183,14 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id  = (int)$_POST['item_id'];
         $val = (int)$_POST['current'];
         $pdo->prepare("UPDATE menu_items SET is_available=? WHERE id=?")->execute([$val ? 0 : 1, $id]);
-        header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=menu-mgmt"); exit;
     }
 
     // --- DELETE MENU ITEM ---
     if ($action === 'delete_menu') {
         $pdo->prepare("DELETE FROM menu_items WHERE id=?")->execute([(int)$_POST['item_id']]);
         setFlash('success', 'Menu item deleted.');
-        header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=menu-mgmt"); exit;
     }
 
     // --- EDIT MENU ITEM ---
@@ -214,14 +214,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dest = __DIR__ . '/../uploads/menu/' . $name;
                 if (!is_dir(__DIR__ . '/../uploads/menu')) mkdir(__DIR__ . '/../uploads/menu', 0755, true);
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                    $imagePath = '/qoyla/uploads/menu/' . $name;
+                    $imagePath = '' . BASE_URL . 'uploads/menu/' . $name;
                 }
             }
         }
         $pdo->prepare("UPDATE menu_items SET category=?,name=?,description=?,price=?,is_available=?,is_featured=?,image_path=? WHERE id=?")
             ->execute([$d['category'],$d['name'],$d['description']??null,(float)$d['price'],isset($d['is_available'])?1:0,isset($d['is_featured'])?1:0,$imagePath,$itemId]);
         setFlash('success', 'Menu item updated.');
-        header("Location: /qoyla/admin/index.php?page=menu-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=menu-mgmt"); exit;
     }
 
     // --- ADD DEAL ---
@@ -242,14 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dest = __DIR__ . '/../uploads/deals/' . $name;
                 if (!is_dir(__DIR__ . '/../uploads/deals')) mkdir(__DIR__ . '/../uploads/deals', 0755, true);
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                    $imagePath = '/qoyla/uploads/deals/' . $name;
+                    $imagePath = '' . BASE_URL . 'uploads/deals/' . $name;
                 }
             }
         }
         $pdo->prepare("INSERT INTO deals (title,description,deal_type,discount_percent,points_multiplier,is_active,start_date,end_date,image_path) VALUES(?,?,?,?,?,?,?,?,?)")
             ->execute([$d['title'],$d['description']??null,$d['deal_type'],(int)($d['discount_percent']??0),(float)($d['points_multiplier']??1),isset($d['is_active'])?1:0,$d['start_date']??null,$d['end_date']??null,$imagePath]);
         setFlash('success', 'Deal added.');
-        header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=deals-mgmt"); exit;
     }
 
     // --- TOGGLE DEAL ---
@@ -257,14 +257,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id  = (int)$_POST['deal_id'];
         $val = (int)$_POST['current'];
         $pdo->prepare("UPDATE deals SET is_active=? WHERE id=?")->execute([$val ? 0 : 1, $id]);
-        header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=deals-mgmt"); exit;
     }
 
     // --- DELETE DEAL ---
     if ($action === 'delete_deal') {
         $pdo->prepare("DELETE FROM deals WHERE id=?")->execute([(int)$_POST['deal_id']]);
         setFlash('success', 'Deal deleted.');
-        header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=deals-mgmt"); exit;
     }
 
     // --- EDIT DEAL ---
@@ -287,20 +287,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dest = __DIR__ . '/../uploads/deals/' . $name;
                 if (!is_dir(__DIR__ . '/../uploads/deals')) mkdir(__DIR__ . '/../uploads/deals', 0755, true);
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                    $imagePath = '/qoyla/uploads/deals/' . $name;
+                    $imagePath = '' . BASE_URL . 'uploads/deals/' . $name;
                 }
             }
         }
         $pdo->prepare("UPDATE deals SET title=?,description=?,deal_type=?,discount_percent=?,points_multiplier=?,is_active=?,start_date=?,end_date=?,image_path=? WHERE id=?")
             ->execute([$d['title'],$d['description']??null,$d['deal_type'],(int)($d['discount_percent']??0),(float)($d['points_multiplier']??1),isset($d['is_active'])?1:0,$d['start_date']??null,$d['end_date']??null,$imagePath,$dealId]);
         setFlash('success', 'Deal updated.');
-        header("Location: /qoyla/admin/index.php?page=deals-mgmt"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=deals-mgmt"); exit;
     }
 
     // --- MARK MESSAGE AS READ ---
     if ($action === 'mark_read') {
         $pdo->prepare("UPDATE contact_messages SET is_read=1 WHERE id=?")->execute([(int)$_POST['msg_id']]);
-        header("Location: /qoyla/admin/index.php?page=messages"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=messages"); exit;
     }
 
     // --- EDIT WORKER ---
@@ -309,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("UPDATE workers SET name=?, role=?, phone1=?, phone2=? WHERE id=?")
             ->execute([$d['name'], $d['role']??null, $d['phone1']??null, $d['phone2']??null, (int)$d['worker_id']]);
         setFlash('success', 'Worker details updated.');
-        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=workers"); exit;
     }
 
     // --- SOFT DELETE WORKER ---
@@ -317,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['worker_id'];
         $pdo->prepare("UPDATE workers SET is_active=0 WHERE id=?")->execute([$id]);
         setFlash('success', 'Worker has been deactivated (soft delete).');
-        header("Location: /qoyla/admin/index.php?page=workers"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=workers"); exit;
     }
 
     // --- REPLY MESSAGE ---
@@ -354,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             setFlash('error', 'Message not found or reply is empty.');
         }
-        header("Location: /qoyla/admin/index.php?page=messages"); exit;
+        header("Location: ' . BASE_URL . 'admin/index.php?page=messages"); exit;
     }
 }
 
@@ -409,7 +409,7 @@ if ($activePage === 'customers') {
   <title><?= e($pageTitle) ?></title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/qoyla/assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body style="background:#F0EBE4;">
 
@@ -449,7 +449,7 @@ if ($activePage === 'customers') {
     <div style="font-size:0.8rem;color:rgba(255,255,255,0.35);padding:0 0.75rem;margin-bottom:0.5rem;">
       Logged in as <strong style="color:rgba(255,255,255,0.6);"><?= e($_SESSION['admin_name']) ?></strong>
     </div>
-    <a href="/qoyla/auth/logout.php" class="admin-nav-link" style="color:#EF4444;">
+    <a href="<?= BASE_URL ?>auth/logout.php" class="admin-nav-link" style="color:#EF4444;">
       <i class="fas fa-sign-out-alt"></i> Logout
     </a>
   </div>
@@ -1319,7 +1319,7 @@ if ($activePage === 'customers') {
   </div>
 </div>
 
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 <script>
 // Points modal — fill with customer data
 function openPointsModal(id, name, points) {

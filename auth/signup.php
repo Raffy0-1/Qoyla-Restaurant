@@ -8,7 +8,7 @@ require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
 // Already logged in? redirect
-if (isset($_SESSION['user_id'])) { header('Location: /qoyla/dashboard/index.php'); exit; }
+if (isset($_SESSION['user_id'])) { header('Location: ' . BASE_URL . 'dashboard/index.php'); exit; }
 
 $signupError = '';
 $formData    = []; // keep form values on error so user doesn't retype
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Redirect to login with success message
-            header('Location: /qoyla/auth/login.php?registered=1');
+            header('Location: ' . BASE_URL . 'auth/login.php?registered=1');
             exit;
         }
     }
@@ -78,7 +78,7 @@ $pageTitle = 'Sign Up | Qoyla Loyalty Club';
   <title><?= e($pageTitle) ?></title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/qoyla/assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body>
 
@@ -108,7 +108,7 @@ $pageTitle = 'Sign Up | Qoyla Loyalty Club';
       </div>
     <?php endif; ?>
 
-    <form method="POST" action="/qoyla/auth/signup.php" data-loading>
+    <form method="POST" action="<?= BASE_URL ?>auth/signup.php" data-loading>
 
       <div class="form-group">
         <label class="form-label">Full Name *</label>
@@ -178,14 +178,14 @@ $pageTitle = 'Sign Up | Qoyla Loyalty Club';
     <div class="auth-divider"><span>already a member?</span></div>
 
     <p style="text-align:center;font-size:0.9rem;color:var(--text-muted);">
-      <a href="/qoyla/auth/login.php"
+      <a href="<?= BASE_URL ?>auth/login.php"
          style="color:var(--flame-orange);font-weight:700;">
         Log in to your account
       </a>
     </p>
 
     <div style="text-align:center;margin-top:1.25rem;">
-      <a href="/qoyla/index.php" style="font-size:0.82rem;color:var(--text-muted);">
+      <a href="<?= BASE_URL ?>index.php" style="font-size:0.82rem;color:var(--text-muted);">
         <i class="fas fa-arrow-left" style="margin-right:5px;"></i> Back to Restaurant
       </a>
     </div>
@@ -193,6 +193,6 @@ $pageTitle = 'Sign Up | Qoyla Loyalty Club';
   </div>
 </div>
 
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 </body>
 </html>

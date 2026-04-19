@@ -44,10 +44,10 @@ $dealIcons = [
         Meats, breads, and flavours your dadi would approve.
       </p>
       <div class="hero-cta" data-aos="fade-up" data-aos-delay="300">
-        <a href="/qoyla/menu.php" class="btn-qoyla">
+        <a href="<?= BASE_URL ?>menu.php" class="btn-qoyla">
           <i class="fas fa-utensils"></i> Explore Menu
         </a>
-        <a href="/qoyla/auth/signup.php" class="btn-qoyla-ghost">
+        <a href="<?= BASE_URL ?>auth/signup.php" class="btn-qoyla-ghost">
           <i class="fas fa-star"></i> Join Loyalty Club
         </a>
       </div>
@@ -88,7 +88,7 @@ $dealIcons = [
           Earn points, save money, eat more
         </p>
       </div>
-      <a href="/qoyla/menu.php" class="btn-qoyla-outline" data-aos="fade-left">
+      <a href="<?= BASE_URL ?>menu.php" class="btn-qoyla-outline" data-aos="fade-left">
         View Full Menu
       </a>
     </div>
@@ -97,7 +97,7 @@ $dealIcons = [
       <!-- No deals in DB yet — show placeholder message -->
       <div style="text-align:center;padding:3rem;background:white;border-radius:var(--radius-md);color:var(--text-muted);">
         <i class="fas fa-tags" style="font-size:2.5rem;color:var(--flame-orange);display:block;margin-bottom:1rem;"></i>
-        <p>No active deals right now. Add deals from the <a href="/qoyla/admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel</a>.</p>
+        <p>No active deals right now. Add deals from the <a href="<?= BASE_URL ?>admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel</a>.</p>
       </div>
     <?php else: ?>
       <div class="grid-3" style="gap:1.5rem;">
@@ -146,7 +146,7 @@ $dealIcons = [
     <?php if (empty($featured)): ?>
       <div style="text-align:center;padding:3rem;background:white;border-radius:var(--radius-md);color:var(--text-muted);">
         <i class="fas fa-utensils" style="font-size:2.5rem;color:var(--flame-orange);display:block;margin-bottom:1rem;"></i>
-        <p>No featured items yet. Mark items as featured in the <a href="/qoyla/admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel</a>.</p>
+        <p>No featured items yet. Mark items as featured in the <a href="<?= BASE_URL ?>admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel</a>.</p>
       </div>
     <?php else: ?>
       <div class="grid-4" data-aos="fade-up" data-aos-delay="150">
@@ -165,7 +165,7 @@ $dealIcons = [
     <?php endif; ?>
 
     <div style="text-align:center;margin-top:3rem;" data-aos="fade-up">
-      <a href="/qoyla/menu.php" class="btn-qoyla">
+      <a href="<?= BASE_URL ?>menu.php" class="btn-qoyla">
         See Full Menu <i class="fas fa-arrow-right"></i>
       </a>
     </div>
@@ -198,7 +198,7 @@ $dealIcons = [
       </div>
     </div>
     <div style="text-align:center;" data-aos="fade-up">
-      <a href="/qoyla/gallery.php" class="btn-qoyla">
+      <a href="<?= BASE_URL ?>gallery.php" class="btn-qoyla">
         View Full Gallery <i class="fas fa-images"></i>
       </a>
     </div>
@@ -218,14 +218,14 @@ $dealIcons = [
     </p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;" data-aos="fade-up" data-aos-delay="200">
       <?php if (isset($_SESSION['user_id'])): ?>
-        <a href="/qoyla/dashboard/index.php" class="btn-qoyla" style="background:white;color:var(--flame-orange);border-color:white;">
+        <a href="<?= BASE_URL ?>dashboard/index.php" class="btn-qoyla" style="background:white;color:var(--flame-orange);border-color:white;">
           <i class="fas fa-star"></i> Go to My Dashboard
         </a>
       <?php else: ?>
-        <a href="/qoyla/auth/signup.php" class="btn-qoyla" style="background:white;color:var(--flame-orange);border-color:white;">
+        <a href="<?= BASE_URL ?>auth/signup.php" class="btn-qoyla" style="background:white;color:var(--flame-orange);border-color:white;">
           <i class="fas fa-star"></i> Sign Up Free
         </a>
-        <a href="/qoyla/auth/login.php" class="btn-qoyla-ghost">Already a Member? Login</a>
+        <a href="<?= BASE_URL ?>auth/login.php" class="btn-qoyla-ghost">Already a Member? Login</a>
       <?php endif; ?>
     </div>
   </div>

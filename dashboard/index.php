@@ -21,7 +21,7 @@ $customer = $stmt->fetch();
 if (!$customer) {
     // Should not happen, but safety first
     session_destroy();
-    header('Location: /qoyla/auth/login.php');
+    header('Location: ' . BASE_URL . 'auth/login.php');
     exit;
 }
 
@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $successMsg .= ' ' . htmlspecialchars($recipient['name'], ENT_QUOTES, 'UTF-8') . ' has received the points.';
                 }
                 setFlash('success', $successMsg);
-                header('Location: /qoyla/dashboard/index.php');
+                header('Location: ' . BASE_URL . 'dashboard/index.php');
                 exit;
             } catch (\Exception $e) {
                 $pdo->rollBack();
@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $pdo->prepare("UPDATE customers SET password = ? WHERE id = ?")
             ->execute([$hashedPass, $userId]);
         setFlash('success', 'Password changed successfully!');
-        header('Location: /qoyla/dashboard/index.php');
+        header('Location: ' . BASE_URL . 'dashboard/index.php');
         exit;
     }
 }
@@ -212,19 +212,19 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
   <title><?= e($pageTitle) ?></title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/qoyla/assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body>
 
 <!-- Dashboard Navbar (different from public navbar) -->
 <nav class="qoyla-nav">
   <div class="nav-inner">
-    <a href="/qoyla/index.php" class="nav-brand">QOYLA<span>Loyalty Dashboard</span></a>
+    <a href="<?= BASE_URL ?>index.php" class="nav-brand">QOYLA<span>Loyalty Dashboard</span></a>
     <div class="nav-links">
-      <a href="/qoyla/index.php">Home</a>
-      <a href="/qoyla/menu.php">Menu</a>
-      <a href="/qoyla/dashboard/index.php" class="active">My Dashboard</a>
-      <a href="/qoyla/auth/logout.php"
+      <a href="<?= BASE_URL ?>index.php">Home</a>
+      <a href="<?= BASE_URL ?>menu.php">Menu</a>
+      <a href="<?= BASE_URL ?>dashboard/index.php" class="active">My Dashboard</a>
+      <a href="<?= BASE_URL ?>auth/logout.php"
          class="nav-btn-login"
          style="background:var(--charcoal-light);">
         <i class="fas fa-sign-out-alt"></i> Logout
@@ -235,10 +235,10 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
     </button>
   </div>
   <div class="nav-mobile" id="navMobile">
-    <a href="/qoyla/index.php">Home</a>
-    <a href="/qoyla/menu.php">Menu</a>
-    <a href="/qoyla/dashboard/index.php">Dashboard</a>
-    <a href="/qoyla/auth/logout.php">Logout</a>
+    <a href="<?= BASE_URL ?>index.php">Home</a>
+    <a href="<?= BASE_URL ?>menu.php">Menu</a>
+    <a href="<?= BASE_URL ?>dashboard/index.php">Dashboard</a>
+    <a href="<?= BASE_URL ?>auth/logout.php">Logout</a>
   </div>
 </nav>
 
@@ -431,7 +431,7 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
             <i class="fas fa-exclamation-circle"></i> <?= e($passwordError) ?>
           </div>
         <?php endif; ?>
-        <form method="POST" action="/qoyla/dashboard/index.php" data-loading>
+        <form method="POST" action="<?= BASE_URL ?>dashboard/index.php" data-loading>
           <input type="hidden" name="action" value="change_password">
           <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
           
@@ -513,7 +513,7 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
         <?= number_format($customer['total_points']) ?> points
       </strong> available to transfer.
     </p>
-    <form method="POST" action="/qoyla/dashboard/index.php" data-loading>
+    <form method="POST" action="<?= BASE_URL ?>dashboard/index.php" data-loading>
       <input type="hidden" name="action" value="transfer">
       <div class="form-group">
         <label class="form-label">Points to Transfer</label>
@@ -546,7 +546,7 @@ $srFormatted = '#' . str_pad($customer['sr_no'], 3, '0', STR_PAD_LEFT);
   </div>
 </div>
 
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 <script>
 function toggleRecipient(val) {
   document.getElementById('recipientField').style.display =

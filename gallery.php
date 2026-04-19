@@ -13,18 +13,18 @@ session_start();
 <body>
 <nav class="qoyla-nav">
   <div class="nav-inner">
-    <a href="/qoyla/index.php" class="nav-brand">QOYLA<span>Restaurant · Multan</span></a>
+    <a href="<?= BASE_URL ?>index.php" class="nav-brand">QOYLA<span>Restaurant · Multan</span></a>
     <div class="nav-links">
-      <a href="/qoyla/index.php">Home</a><a href="/qoyla/menu.php">Menu</a>
-      <a href="/qoyla/gallery.php" class="active">Gallery</a>
-      <a href="/qoyla/about.php">About</a><a href="/qoyla/contact.php">Contact</a>
-      <a href="/qoyla/auth/login.php" class="nav-btn-login">Login</a>
+      <a href="<?= BASE_URL ?>index.php">Home</a><a href="<?= BASE_URL ?>menu.php">Menu</a>
+      <a href="<?= BASE_URL ?>gallery.php" class="active">Gallery</a>
+      <a href="<?= BASE_URL ?>about.php">About</a><a href="<?= BASE_URL ?>contact.php">Contact</a>
+      <a href="<?= BASE_URL ?>auth/login.php" class="nav-btn-login">Login</a>
     </div>
     <button class="nav-hamburger" id="navHamburger"><span></span><span></span><span></span></button>
   </div>
   <div class="nav-mobile" id="navMobile">
-    <a href="/qoyla/index.php">Home</a><a href="/qoyla/menu.php">Menu</a><a href="/qoyla/gallery.php">Gallery</a>
-    <a href="/qoyla/about.php">About</a><a href="/qoyla/contact.php">Contact</a><a href="/qoyla/auth/login.php">Login</a>
+    <a href="<?= BASE_URL ?>index.php">Home</a><a href="<?= BASE_URL ?>menu.php">Menu</a><a href="<?= BASE_URL ?>gallery.php">Gallery</a>
+    <a href="<?= BASE_URL ?>about.php">About</a><a href="<?= BASE_URL ?>contact.php">Contact</a><a href="<?= BASE_URL ?>auth/login.php">Login</a>
   </div>
 </nav>
 
@@ -147,12 +147,12 @@ session_start();
     <div><div class="footer-brand-name">QOYLA</div><p class="footer-tagline">Authentic desi flavours, crafted over charcoal.</p>
       <div class="social-row"><a href="#" class="social-btn"><i class="fab fa-instagram"></i></a><a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a><a href="#" class="social-btn"><i class="fab fa-tiktok"></i></a><a href="#" class="social-btn"><i class="fab fa-whatsapp"></i></a></div>
     </div>
-    <div><div class="footer-col-title">Navigate</div><div class="footer-links"><a href="/qoyla/index.php">Home</a><a href="/qoyla/menu.php">Menu</a><a href="/qoyla/gallery.php">Gallery</a><a href="/qoyla/about.php">About</a><a href="/qoyla/contact.php">Contact</a></div></div>
+    <div><div class="footer-col-title">Navigate</div><div class="footer-links"><a href="<?= BASE_URL ?>index.php">Home</a><a href="<?= BASE_URL ?>menu.php">Menu</a><a href="<?= BASE_URL ?>gallery.php">Gallery</a><a href="<?= BASE_URL ?>about.php">About</a><a href="<?= BASE_URL ?>contact.php">Contact</a></div></div>
     <div><div class="footer-col-title">Reach Us</div>
       <div class="footer-contact-item"><i class="fas fa-phone"></i><span>+92 XXX XXXXXXX</span></div>
       <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Multan, Punjab</span></div>
     </div>
-    <div><div class="footer-col-title">Loyalty Club</div><p style="font-size:0.88rem;line-height:1.8;margin-bottom:1.2rem;">Earn points on every visit.</p><a href="/qoyla/auth/signup.php" class="btn-qoyla" style="font-size:0.8rem;padding:0.55rem 1.3rem;">Join Now</a></div>
+    <div><div class="footer-col-title">Loyalty Club</div><p style="font-size:0.88rem;line-height:1.8;margin-bottom:1.2rem;">Earn points on every visit.</p><a href="<?= BASE_URL ?>auth/signup.php" class="btn-qoyla" style="font-size:0.8rem;padding:0.55rem 1.3rem;">Join Now</a></div>
   </div>
   <div class="footer-bottom"><p>&copy; 2026 Qoyla Restaurant.</p><p>Made with 🔥 in Multan</p></div>
 </footer>

@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setFlash('success', 'Message sent! We\'ll get back to you as soon as possible.');
         }
         // POST → Redirect → GET  (prevents resubmit on refresh)
-        header('Location: /qoyla/contact.php');
+        header('Location: ' . BASE_URL . 'contact.php');
         exit;
     }
 }
@@ -166,7 +166,7 @@ include 'includes/header.php';
           <h3 style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;">
             Send a Message
           </h3>
-          <form method="POST" action="/qoyla/contact.php" data-loading>
+          <form method="POST" action="<?= BASE_URL ?>contact.php" data-loading>
             <input type="hidden" name="form_type" value="contact">
             <div class="form-group">
               <label class="form-label">Your Name *</label>
@@ -213,7 +213,7 @@ include 'includes/header.php';
           <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.7;">
             We take every complaint seriously. All submissions go directly to management.
           </p>
-          <form method="POST" action="/qoyla/contact.php">
+          <form method="POST" action="<?= BASE_URL ?>contact.php">
             <input type="hidden" name="form_type" value="complaint">
             <div class="form-group">
               <label class="form-label">Your Name *</label>

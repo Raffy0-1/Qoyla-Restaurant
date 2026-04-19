@@ -64,7 +64,7 @@ $categories = [
       <div style="text-align:center;padding:4rem;background:white;border-radius:var(--radius-md);color:var(--text-muted);">
         <i class="fas fa-utensils" style="font-size:3rem;color:var(--flame-orange);display:block;margin-bottom:1rem;"></i>
         <h3 style="font-family:'Cinzel',serif;margin-bottom:0.5rem;">Menu Coming Soon</h3>
-        <p>Add dishes from the <a href="/qoyla/admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel → Menu Items</a></p>
+        <p>Add dishes from the <a href="<?= BASE_URL ?>admin/" style="color:var(--flame-orange);font-weight:700;">Admin Panel → Menu Items</a></p>
       </div>
     <?php else: ?>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;"

@@ -9,6 +9,13 @@
 // and change APP_ENV to 'production'
 define('APP_ENV', 'development');
 
+// Determine Base URL based on environment
+if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') !== false) {
+    define('BASE_URL', '/qoyla/');
+} else {
+    define('BASE_URL', '/');
+}
+
 $host = 'localhost';
 $db   = 'qoyla_db';
 $user = 'root';

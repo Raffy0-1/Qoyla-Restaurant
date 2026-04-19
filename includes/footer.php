@@ -27,11 +27,11 @@
     <div>
       <div class="footer-col-title">Navigate</div>
       <div class="footer-links">
-        <a href="/qoyla/index.php">Home</a>
-        <a href="/qoyla/menu.php">Menu</a>
-        <a href="/qoyla/gallery.php">Gallery</a>
-        <a href="/qoyla/about.php">About</a>
-        <a href="/qoyla/contact.php">Contact</a>
+        <a href="<?= BASE_URL ?>index.php">Home</a>
+        <a href="<?= BASE_URL ?>menu.php">Menu</a>
+        <a href="<?= BASE_URL ?>gallery.php">Gallery</a>
+        <a href="<?= BASE_URL ?>about.php">About</a>
+        <a href="<?= BASE_URL ?>contact.php">Contact</a>
       </div>
     </div>
     <div>
@@ -44,7 +44,7 @@
     <div>
       <div class="footer-col-title">Loyalty Club</div>
       <p style="font-size:0.88rem; line-height:1.8; margin-bottom:1.2rem;">Earn points on every visit. Redeem for discounts & special deals.</p>
-      <a href="/qoyla/auth/signup.php" class="btn-qoyla" style="font-size:0.8rem; padding:0.55rem 1.3rem;">Join Now <i class="fas fa-arrow-right"></i></a>
+      <a href="<?= BASE_URL ?>auth/signup.php" class="btn-qoyla" style="font-size:0.8rem; padding:0.55rem 1.3rem;">Join Now <i class="fas fa-arrow-right"></i></a>
     </div>
   </div>
   <div class="footer-bottom">
@@ -52,7 +52,7 @@
     <p>Made with <i class="fas fa-fire" style="color:var(--flame-orange);"></i> in Multan</p>
   </div>
 </footer>
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 <script>
 function fetchAndShowItem(type, id) {
   // Show loading state if needed
@@ -64,7 +64,7 @@ function fetchAndShowItem(type, id) {
   
   openModal('itemDetailsModal');
   
-  const endpoint = type === 'deal' ? `/qoyla/get_deal.php?id=${id}` : `/qoyla/get_item.php?id=${id}`;
+  const endpoint = type === 'deal' ? `<?= BASE_URL ?>get_deal.php?id=${id}` : `<?= BASE_URL ?>get_item.php?id=${id}`;
   
   fetch(endpoint)
     .then(res => res.json())

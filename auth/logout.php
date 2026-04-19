@@ -15,5 +15,5 @@ if (isset($_COOKIE['qoyla_remember'])) {
 }
 
 // Redirect to homepage
-header('Location: /qoyla/index.php');
+header('Location: ' . BASE_URL . 'index.php');
 exit;

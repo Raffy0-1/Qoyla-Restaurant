@@ -7,7 +7,7 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
-if (isset($_SESSION['admin_id'])) { header('Location: /qoyla/admin/index.php'); exit; }
+if (isset($_SESSION['admin_id'])) { header('Location: ' . BASE_URL . 'admin/index.php'); exit; }
 
 $error = '';
 
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['admin_id']   = $admin['id'];
             $_SESSION['admin_name'] = $admin['name'];
             $_SESSION['admin_role'] = $admin['role'];
-            header('Location: /qoyla/admin/index.php');
+            header('Location: ' . BASE_URL . 'admin/index.php');
             exit;
         }
         $error = 'Invalid username or password.';
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Admin Login | Qoyla</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/qoyla/assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body>
 <div class="auth-page" style="background:var(--charcoal-black);">
@@ -72,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </form>
 
     <div style="text-align:center;margin-top:1.5rem;">
-      <a href="/qoyla/index.php" style="font-size:0.82rem;color:var(--text-muted);">
+      <a href="<?= BASE_URL ?>index.php" style="font-size:0.82rem;color:var(--text-muted);">
         <i class="fas fa-arrow-left" style="margin-right:5px;"></i> Back to Restaurant
       </a>
     </div>
   </div>
 </div>
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 </body>
 </html>

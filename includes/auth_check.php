@@ -5,7 +5,7 @@
 // ============================================================
 if (!isset($_SESSION['user_id'])) {
     setFlash('error', 'Please log in to access your dashboard.');
-    header('Location: /qoyla/auth/login.php');
+    header('Location: ' . BASE_URL . 'auth/login.php');
     exit;
 }
 ?>

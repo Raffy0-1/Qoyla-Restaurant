@@ -8,7 +8,7 @@ require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
 // If already logged in as customer, go to dashboard
-if (isset($_SESSION['user_id']))  { header('Location: /qoyla/dashboard/index.php'); exit; }
+if (isset($_SESSION['user_id']))  { header('Location: ' . BASE_URL . 'dashboard/index.php'); exit; }
 // If already logged in as admin on THIS tab, go to admin panel
 // (But do NOT redirect here — let the form POST decide based on credentials)
 
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['admin_id']   = $admin['id'];
             $_SESSION['admin_name'] = $admin['name'];
             $_SESSION['admin_role'] = $admin['role'];
-            header('Location: /qoyla/admin/index.php');
+            header('Location: ' . BASE_URL . 'admin/index.php');
             exit;
         }
 
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setcookie('qoyla_remember', $customer['id'], time() + (30 * 24 * 60 * 60), '/');
             }
 
-            header('Location: /qoyla/dashboard/index.php');
+            header('Location: ' . BASE_URL . 'dashboard/index.php');
             exit;
         }
 
@@ -77,7 +77,7 @@ $pageTitle = 'Login | Qoyla Restaurant';
   <title><?= e($pageTitle) ?></title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/qoyla/assets/css/style.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
 </head>
 <body>
 
@@ -101,7 +101,7 @@ $pageTitle = 'Login | Qoyla Restaurant';
       </div>
     <?php endif; ?>
 
-    <form method="POST" action="/qoyla/auth/login.php" data-loading>
+    <form method="POST" action="<?= BASE_URL ?>auth/login.php" data-loading>
 
       <div class="form-group">
         <label class="form-label">Phone Number</label>
@@ -148,14 +148,14 @@ $pageTitle = 'Login | Qoyla Restaurant';
 
     <p style="text-align:center;font-size:0.9rem;color:var(--text-muted);">
       New to Qoyla?
-      <a href="/qoyla/auth/signup.php"
+      <a href="<?= BASE_URL ?>auth/signup.php"
          style="color:var(--flame-orange);font-weight:700;margin-left:4px;">
         Create a free account
       </a>
     </p>
 
     <div style="text-align:center;margin-top:1.5rem;">
-      <a href="/qoyla/index.php" style="font-size:0.82rem;color:var(--text-muted);">
+      <a href="<?= BASE_URL ?>index.php" style="font-size:0.82rem;color:var(--text-muted);">
         <i class="fas fa-arrow-left" style="margin-right:5px;"></i> Back to Restaurant
       </a>
     </div>
@@ -163,6 +163,6 @@ $pageTitle = 'Login | Qoyla Restaurant';
   </div>
 </div>
 
-<script src="/qoyla/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>assets/js/main.js"></script>
 </body>
 </html>
